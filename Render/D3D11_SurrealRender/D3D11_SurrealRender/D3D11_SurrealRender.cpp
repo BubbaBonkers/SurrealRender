@@ -9,11 +9,11 @@
 // Tell the linker about the d3d11 library to include it as if it were from the source file.
 #pragma comment(lib, "d3d11.lib")
 
-ID3D11Device* Device;
-IDXGISwapChain* SwapChain;
-ID3D11DeviceContext* Context;
-ID3D11RenderTargetView* RenderTargetView;
-D3D11_VIEWPORT Viewport;
+// Custom library includes.
+#include "DisplayAgent.h"       // Holds *Device, *SwapChain, *Context, *RenderTargetView, and Viewport.
+
+// Holds *Device, *SwapChain, *Context, *RenderTargetView, and Viewport.
+DisplayAgent MainDisplay;
 
 #define MAX_LOADSTRING 100
 
@@ -71,11 +71,24 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
 
         // Check if the lParam value is WM_QUIT and exit the loop if it is.
-        if (msg.lParam == WM_QUIT)
+        if (msg.message == WM_QUIT)
         {
             break;
         }
+
+        // Setup Render Targets.
+        ID3D11RenderTargetView* TempRTV[] = { MainDisplay.RenderTargetView };
+        MainDisplay.Context->OMSetRenderTargets(1, TempRTV, 0);
+
+        float Color[] = { 0.0f, 1.0f, 1.0f, 1.0f };
+        MainDisplay.Context->ClearRenderTargetView(MainDisplay.RenderTargetView, Color);
+
+        // Present the SwapChain with the option to Cap the framerate to moniters maximum.
+        MainDisplay.SwapChain->Present(MainDisplay.FrameSyncControl, 0);
     }
+
+    // Release all used D3D interfaces.
+    MainDisplay.ReleaseInterfaces();
 
     return (int) msg.wParam;
 }
@@ -153,13 +166,25 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    Swap.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
    Swap.BufferDesc.Width = WindowRectangle.right - WindowRectangle.left;
    Swap.BufferDesc.Height = WindowRectangle.bottom - WindowRectangle.top;
-   Swap.BufferUsage = DXGI_USAGE_BACK_BUFFER;
+   Swap.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
    Swap.SampleDesc.Count = 1;
 
    // Create and set the Device and SwapChain variables using DirectX.
    HRESULT hr;
    hr = D3D11CreateDeviceAndSwapChain(  nullptr, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_DEBUG, 
-                                        &dx11, 1, D3D11_SDK_VERSION, &Swap, &SwapChain, &Device, 0, &Context);
+                                        &dx11, 1, D3D11_SDK_VERSION, &Swap, &MainDisplay.SwapChain, &MainDisplay.Device, 0, &MainDisplay.Context);
+
+   ID3D11Resource* BackBuffer;                                                                          // Create the Back Buffer resource in DirectX.
+   hr = MainDisplay.SwapChain->GetBuffer(0, __uuidof(BackBuffer), (void**)&BackBuffer);                 // Get the Buffer through the Swap Chain.
+   hr = MainDisplay.Device->CreateRenderTargetView(BackBuffer, NULL, &MainDisplay.RenderTargetView);    // Create the RenterTargetView for the Device.
+   BackBuffer->Release();                                                                               // Remove one from the internal count of the Device.
+
+   // Setup the Viewport.
+   MainDisplay.Viewport.Width = Swap.BufferDesc.Width;
+   MainDisplay.Viewport.Height = Swap.BufferDesc.Height;
+   MainDisplay.Viewport.TopLeftX = MainDisplay.Viewport.TopLeftY = 0;
+   MainDisplay.Viewport.MinDepth = 0;
+   MainDisplay.Viewport.MaxDepth = 1;
 
    return TRUE;
 }
@@ -193,14 +218,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             default:
                 return DefWindowProc(hWnd, message, wParam, lParam);
             }
-        }
-        break;
-    case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: Add any drawing code that uses hdc here...
-            EndPaint(hWnd, &ps);
         }
         break;
     case WM_DESTROY:
