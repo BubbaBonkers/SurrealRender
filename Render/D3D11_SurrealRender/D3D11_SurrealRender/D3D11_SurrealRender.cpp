@@ -11,6 +11,11 @@
 
 // Custom library includes.
 #include "DisplayAgent.h"       // Holds *Device, *SwapChain, *Context, *RenderTargetView, and Viewport.
+#include "NotReallyBasics.h"    // Some basic functions and structs for math and color type things.
+#include "GeneralVertexShaders.csh"
+#include "GeneralPixelShaders.csh"
+
+using namespace NRB;
 
 // Holds *Device, *SwapChain, *Context, *RenderTargetView, and Viewport.
 DisplayAgent MainDisplay;
@@ -76,15 +81,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             break;
         }
 
-        // Setup Render Targets.
-        ID3D11RenderTargetView* TempRTV[] = { MainDisplay.RenderTargetView };
-        MainDisplay.Context->OMSetRenderTargets(1, TempRTV, 0);
-
-        float Color[] = { 0.0f, 1.0f, 1.0f, 1.0f };
-        MainDisplay.Context->ClearRenderTargetView(MainDisplay.RenderTargetView, Color);
-
-        // Present the SwapChain with the option to Cap the framerate to moniters maximum.
-        MainDisplay.SwapChain->Present(MainDisplay.FrameSyncControl, 0);
+        // This function sets up the render targets and presents the image.
+        MainDisplay.PresentFromRenderTarget();
     }
 
     // Release all used D3D interfaces.
@@ -139,8 +137,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // Store instance handle in our global variable
 
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+   // Create the window for DirectX to display through.
+   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPED | WS_BORDER | WS_SYSMENU,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+   // Hide the menu bar with File options.
+   SetMenu(hWnd, NULL);
 
    if (!hWnd)
    {
@@ -185,6 +186,45 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    MainDisplay.Viewport.TopLeftX = MainDisplay.Viewport.TopLeftY = 0;
    MainDisplay.Viewport.MinDepth = 0;
    MainDisplay.Viewport.MaxDepth = 1;
+
+   // Vertex data for the triangle.
+   Vertex Triangle[] =
+   {
+       { { 0, 0.5f, 0, 1 }, { 1, 1, 1, 1 } },
+       { { 0.5f, -0.5f, 0, 1 }, { 1, 1, 1, 1 } },
+       { { -0.5f, -0.5f, 0, 1 }, { 1, 1, 1, 1 } }
+   };
+
+   // Load the Triangle onto the card.
+   D3D11_BUFFER_DESC BufferDescription;
+   D3D11_SUBRESOURCE_DATA SubData;
+   ZeroMemory(&BufferDescription, sizeof(BufferDescription));
+   ZeroMemory(&SubData, sizeof(SubData));
+
+   BufferDescription.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+   BufferDescription.ByteWidth = sizeof(Triangle) * 3;
+   BufferDescription.CPUAccessFlags = 0;
+   BufferDescription.MiscFlags = 0;
+   BufferDescription.StructureByteStride = 0;
+   BufferDescription.Usage = D3D11_USAGE_DEFAULT;
+
+   SubData.pSysMem = Triangle;
+
+   // Create the Buffer to put the model on.
+   hr = MainDisplay.Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay.VertexBuffer);
+
+   // Write, Compile, and Load the shaders.
+   hr = MainDisplay.Device->CreateVertexShader(GeneralVertexShaders, sizeof(GeneralVertexShaders), nullptr, &MainDisplay.VertexShader);
+   hr = MainDisplay.Device->CreatePixelShader(GeneralPixelShaders, sizeof(GeneralPixelShaders), nullptr, &MainDisplay.PixelShader);
+
+   // Describe it to DirectX.
+   D3D11_INPUT_ELEMENT_DESC InputDesc[] =
+   {
+       {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+       {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
+   };
+
+   hr = MainDisplay.Device->CreateInputLayout(InputDesc, 2, GeneralVertexShaders, sizeof(GeneralVertexShaders), &MainDisplay.InputLayout);
 
    return TRUE;
 }
