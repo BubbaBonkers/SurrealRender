@@ -162,6 +162,7 @@
     <ResourceCompile Include="D3D11_SurrealRender.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="Assets\Crate.dds" />
     <Image Include="D3D11_SurrealRender.ico" />
     <Image Include="small.ico" />
   </ItemGroup>
@@ -182,6 +183,9 @@
       <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename)</VariableName>
       <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename).csh</HeaderFileOutput>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\cube.mesh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

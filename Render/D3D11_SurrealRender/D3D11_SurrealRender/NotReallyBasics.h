@@ -26,6 +26,7 @@ namespace NRB
 			Alpha = InputColor[3];
 		}
 
+		// Return the float values of the color as a float4 array rather than individual values. Returns as RGBA
 		float* GetColorAsArray()
 		{
 			float ColorsArray[4] = { Red, Green, Blue, Alpha };
@@ -40,7 +41,7 @@ namespace NRB
 		float X, Y, Z, W;
 
 		// Set the Vector coordinates to a new X, Y, Z, and W using four input floats as the new values.
-		void Vector(float x, float y, float z, float w)
+		void Set(float x, float y, float z, float w)
 		{
 			X = x;
 			Y = y;
@@ -49,7 +50,7 @@ namespace NRB
 		}
 
 		// Set the Vector coordinates to a new X, Y, Z, and W using one float array with four input floats as the new values.
-		void Vector(float InputVector4[])
+		void Set(float InputVector4[])
 		{
 			X = InputVector4[0];
 			Y = InputVector4[1];
@@ -62,13 +63,20 @@ namespace NRB
 	struct Vertex
 	{
 	public:
-		Vector4		Position;
-		RGBAColor	Color;
+		Vector4		Position;				// The position of this vertex in 3D space.
+		RGBAColor	Color;					// The color of this vertext position.
 	};
 
 	// A structure containing the most basic information for an object in the 3D scene. One object contains data for Vertices and their Color/Position, the number of vertices in the object, and other data for the object.
 	struct Object
 	{
+		char* Name;							// The name of this object for debugging.
 		Vertex Vertices[1];					// The Position and Color data for each vertex.
+
+		// Count how many vertices are in the Vertices array and return it as an int.
+		int CountVertices()
+		{
+			return (sizeof(Vertices) / sizeof(Vertices[0]));
+		}
 	};
 }

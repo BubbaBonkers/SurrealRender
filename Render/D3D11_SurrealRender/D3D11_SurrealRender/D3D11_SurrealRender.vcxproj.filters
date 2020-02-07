@@ -16,6 +16,9 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{dd8d435f-f572-4b66-9a95-2489c72f43dc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Assets">
+      <UniqueIdentifier>{2caff5db-81c5-4298-847c-67cdcdee504c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -57,6 +60,9 @@
     <Image Include="D3D11_SurrealRender.ico">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="Assets\Crate.dds">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="GeneralPixelShaders.hlsl">
@@ -65,5 +71,10 @@
     <FxCompile Include="GeneralVertexShaders.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\cube.mesh">
+      <Filter>Assets</Filter>
+    </None>
   </ItemGroup>
 </Project>
