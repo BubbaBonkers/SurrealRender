@@ -233,7 +233,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    BufferDescription.CPUAccessFlags = 0;
    BufferDescription.MiscFlags = 0;
    BufferDescription.StructureByteStride = 0;
-   BufferDescription.Usage = D3D11_USAGE_DEFAULT;
+   BufferDescription.Usage = D3D11_USAGE_IMMUTABLE;
 
    SubData.pSysMem = Triangle;
 
@@ -265,6 +265,16 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    // Create the Buffer to put the model on.
    hr = MainDisplay.Device->CreateBuffer(&BufferDescription, nullptr, &MainDisplay.ConstantBuffer);
+
+   /*
+   // Load the complex mesh onto the video card.
+   BufferDescription.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+   BufferDescription.ByteWidth = sizeof();
+   BufferDescription.CPUAccessFlags = 0;
+   BufferDescription.MiscFlags = 0;
+   BufferDescription.StructureByteStride = 0;
+   BufferDescription.Usage = D3D11_USAGE_IMMUTABLE;
+   */
 
    return TRUE;
 }

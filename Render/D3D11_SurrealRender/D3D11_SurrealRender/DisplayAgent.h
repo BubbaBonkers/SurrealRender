@@ -30,8 +30,11 @@ public:
 	ID3D11VertexShader*			VertexShader = nullptr;		// HLSL
 	ID3D11PixelShader*			PixelShader = nullptr;		// HLSL
 
-	ID3D11Buffer* ConstantBuffer = nullptr;				// Stores shaders to send to the video card.
-	Environment SpacialEnvironment;
+	ID3D11Buffer* ConstantBuffer = nullptr;					// Stores shaders to send to the video card.
+	ID3D11Buffer* MeshVertexBuffer = nullptr;
+	ID3D11Buffer* MeshIndexBuffer = nullptr;
+
+	Environment SpacialEnvironment;							// Contains the World, View, and Projection matrices.
 
 	// Graphics control options. -------------------------------------------------------------------->
 	int FrameSyncControl = 0;		// Should the refresh rate be locked to the maximum on the device? "0" means no, "1" means yes. V-SYNC.
