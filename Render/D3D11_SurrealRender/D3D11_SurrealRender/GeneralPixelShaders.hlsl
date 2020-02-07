@@ -1,10 +1,11 @@
-struct OutputVertex
+struct VS_OUTPUT
 {
 	float4 Position : SV_POSITION;
-	float4 Color : COLOR;
+	float3 Normal : NORMAL;
+	float2 Texture : TEXCOORD1;
 };
 
-float4 main(OutputVertex InputPixel) : SV_TARGET
+float4 main(VS_OUTPUT InputPixel) : SV_TARGET
 {
-	return InputPixel.Color;
+	return float4(InputPixel.Texture, 1, 0);
 }

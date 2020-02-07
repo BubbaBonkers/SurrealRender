@@ -1,5 +1,6 @@
 #include <vector>
 #include <fstream>
+#include <Windows.h>
 
 #pragma once
 
@@ -120,31 +121,43 @@ namespace NRB
 	struct Object
 	{
 	public:
-		char* Name;							// The name of this object for debugging.
+		const char* Name;					// The name of this object for debugging.
 		std::vector<Vertex> Vertices;		// The Position and Color data for each vertex.
 		std::vector<int> Indices;			// The Index data for the model.
 
 		// Below is extra functionality in case it is needed in the future.
 		bool bIsVisible = true;
 
-		void CreateObject(char* DebugName, std::vector<Vertex> VertexData, std::vector<int> IndexData, bool Hide = false)
+		// Create the basic information in this object by using input values. Basic object, no meshes.
+		void CreateObject(const char* DebugName, std::vector<Vertex> VertexData, std::vector<int> IndexData, bool bHide = false)
 		{
 			Name = DebugName;
 			Vertices = VertexData;
 			Indices = IndexData;
+			bIsVisible = bHide;
+		}
+
+		// Same as CreateObject base, but this one takes a File Name for the mesh to load into the object.
+		void CreateObject(const char* DebugName, const char* FileName, bool Hide = false)
+		{
+			// Set basic information about this object.
+			Name = DebugName;
 			bIsVisible = Hide;
+
+			// Load mesh data into this object.
+			LoadMesh(FileName);
 		}
 
 		// Count how many vertices are in the Vertices array and return it as an int.
 		int CountVertices()
 		{
-			return (sizeof(Vertices) / sizeof(Vertices[0]));
+			return Vertices.size();
 		}
 
 		// Count how many indices are in the Indices array and return it as an int.
 		int CountIndices()
 		{
-			return (sizeof(Indices) / sizeof(int));
+			return Indices.size();
 		}
 
 		// Load mesh information such as Texture, Vertices, Indices, and UVs onto this object using a .mesh object file as MeshFileName.
@@ -152,6 +165,8 @@ namespace NRB
 		{
 			// Open the file (mesh) in binary input mode.
 			std::fstream file{ MeshFileName, std::ios_base::in | std::ios_base::binary };
+
+			assert(file.is_open());
 
 			// Ensure the file opened correctly.
 			if (file.is_open())

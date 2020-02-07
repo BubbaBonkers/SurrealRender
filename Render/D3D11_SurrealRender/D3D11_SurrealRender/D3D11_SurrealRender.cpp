@@ -9,11 +9,17 @@
 // Tell the linker about the d3d11 library to include it as if it were from the source file.
 #pragma comment(lib, "d3d11.lib")
 
+#include <d3dcompiler.h>
+
 // Custom library includes.
 #include "DisplayAgent.h"       // Holds *Device, *SwapChain, *Context, *RenderTargetView, and Viewport.
 #include "NotReallyBasics.h"    // Some basic functions and structs for math and color type things.
-#include "GeneralVertexShaders.csh"
+#include "DDSTextureLoader.h"
+
+// Shader files.
+//#include "GeneralVertexShaders.csh"
 #include "GeneralPixelShaders.csh"
+#include "GeneralMeshVertexShaders.csh"
 
 using namespace NRB;
 using namespace DirectX;
@@ -33,6 +39,8 @@ ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+
+HRESULT CompileShaderFromFile(const WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -83,7 +91,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
 
         // This function sets up the render targets and presents the image.
-        MainDisplay.PresentFromRenderTarget();
+        MainDisplay.PresentFromRenderTarget(MainDisplay.WorldObjects[0]);
     }
 
     // Release all used D3D interfaces.
@@ -91,8 +99,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     return (int) msg.wParam;
 }
-
-
 
 //
 //  FUNCTION: MyRegisterClass()
@@ -237,21 +243,68 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    SubData.pSysMem = Triangle;
 
+
+
+   // Create the cube.mesh for testing the object creation.
+   Object CubeTest;
+   CubeTest.CreateObject("TestingCube", "Assets/cube.mesh");             // Create the object and initialize information.
+   MainDisplay.WorldObjects.push_back(CubeTest);
+
+   // Load the Cube object data into the video card.
+   BufferDescription;
+   SubData;
+   ZeroMemory(&BufferDescription, sizeof(BufferDescription));
+   ZeroMemory(&SubData, sizeof(SubData));
+
+   BufferDescription.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+   BufferDescription.ByteWidth = sizeof(Vertex) * CubeTest.Vertices.size();
+   BufferDescription.CPUAccessFlags = 0;
+   BufferDescription.MiscFlags = 0;
+   BufferDescription.StructureByteStride = 0;
+   BufferDescription.Usage = D3D11_USAGE_IMMUTABLE;
+
+   SubData.pSysMem = CubeTest.Vertices.data();
+
+   // Vertex Buffer.
+   hr = MainDisplay.Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay.MeshVertexBuffer);
+
+   // Index Buffer.
+   BufferDescription.BindFlags = D3D11_BIND_INDEX_BUFFER;
+   BufferDescription.ByteWidth = sizeof(Vertex) * CubeTest.Indices.size();
+   SubData.pSysMem = CubeTest.Indices.data();
+
+   hr = MainDisplay.Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay.MeshIndexBuffer);
+
+   // Load the new mesh shader.
+   hr = MainDisplay.Device->CreateVertexShader(GeneralMeshVertexShaders, sizeof(GeneralMeshVertexShaders), nullptr, &MainDisplay.MeshVertexShader);
+
+
+
    // Create the Buffer to put the model on.
-   hr = MainDisplay.Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay.VertexBuffer);
+   hr = MainDisplay.Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay.MeshIndexBuffer);
 
    // Write, Compile, and Load the shaders.
-   hr = MainDisplay.Device->CreateVertexShader(GeneralVertexShaders, sizeof(GeneralVertexShaders), nullptr, &MainDisplay.VertexShader);
+   //hr = MainDisplay.Device->CreateVertexShader(GeneralVertexShaders, sizeof(GeneralVertexShaders), nullptr, &MainDisplay.VertexShader);
    hr = MainDisplay.Device->CreatePixelShader(GeneralPixelShaders, sizeof(GeneralPixelShaders), nullptr, &MainDisplay.PixelShader);
 
+   /*// This is for the pyrimid.
    // Describe it to DirectX.
    D3D11_INPUT_ELEMENT_DESC InputDesc[] =
    {
        {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
        {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
    };
+   */
+   // Describe it to DirectX.
+   D3D11_INPUT_ELEMENT_DESC InputDesc[] =
+   {
+       {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+       {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+       {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0}
+   };
 
-   hr = MainDisplay.Device->CreateInputLayout(InputDesc, 2, GeneralVertexShaders, sizeof(GeneralVertexShaders), &MainDisplay.InputLayout);
+
+   hr = MainDisplay.Device->CreateInputLayout(InputDesc, 3, GeneralMeshVertexShaders, sizeof(GeneralMeshVertexShaders), &MainDisplay.InputLayout);
 
    // Create the constant buffer.
    ZeroMemory(&BufferDescription, sizeof(BufferDescription));
@@ -266,15 +319,23 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    // Create the Buffer to put the model on.
    hr = MainDisplay.Device->CreateBuffer(&BufferDescription, nullptr, &MainDisplay.ConstantBuffer);
 
-   /*
    // Load the complex mesh onto the video card.
    BufferDescription.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-   BufferDescription.ByteWidth = sizeof();
+   BufferDescription.ByteWidth = sizeof(CubeTest.Vertices.data());
    BufferDescription.CPUAccessFlags = 0;
    BufferDescription.MiscFlags = 0;
    BufferDescription.StructureByteStride = 0;
    BufferDescription.Usage = D3D11_USAGE_IMMUTABLE;
-   */
+
+   SubData.pSysMem = CubeTest.Vertices.data();
+
+   // Create the Buffer to put the model on.
+   hr = MainDisplay.Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay.MeshVertexBuffer);
+   BufferDescription.BindFlags = D3D11_BIND_INDEX_BUFFER;
+   BufferDescription.ByteWidth = sizeof(CubeTest.Indices);
+   SubData.pSysMem = CubeTest.Indices.data();
+
+   hr = MainDisplay.Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay.MeshIndexBuffer);
 
    return TRUE;
 }
@@ -337,4 +398,38 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     return (INT_PTR)FALSE;
+}
+
+
+HRESULT CompileShaderFromFile(const WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut)
+{
+    HRESULT hr = S_OK;
+
+    DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+#ifdef _DEBUG
+    // Set the D3DCOMPILE_DEBUG flag to embed debug information in the shaders.
+    // Setting this flag improves the shader debugging experience, but still allows 
+    // the shaders to be optimized and to run exactly the way they will run in 
+    // the release configuration of this program.
+    dwShaderFlags |= D3DCOMPILE_DEBUG;
+
+    // Disable optimizations to further improve shader debugging
+    dwShaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif
+
+    ID3DBlob* pErrorBlob = nullptr;
+    hr = D3DCompileFromFile(szFileName, nullptr, nullptr, szEntryPoint, szShaderModel,
+        dwShaderFlags, 0, ppBlobOut, &pErrorBlob);
+    if (FAILED(hr))
+    {
+        if (pErrorBlob)
+        {
+            OutputDebugStringA(reinterpret_cast<const char*>(pErrorBlob->GetBufferPointer()));
+            pErrorBlob->Release();
+        }
+        return hr;
+    }
+    if (pErrorBlob) pErrorBlob->Release();
+
+    return S_OK;
 }

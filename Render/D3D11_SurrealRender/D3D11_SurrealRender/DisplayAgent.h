@@ -1,5 +1,6 @@
 #include "d3d11.h"				// Include the DirectX libraries.
 #include <DirectXMath.h>
+#include <vector>
 
 #include "NotReallyBasics.h"    // Some basic functions and structs for math and color type things.
 
@@ -30,11 +31,15 @@ public:
 	ID3D11VertexShader*			VertexShader = nullptr;		// HLSL
 	ID3D11PixelShader*			PixelShader = nullptr;		// HLSL
 
+	ID3D11VertexShader* MeshVertexShader = nullptr;			// HLSL
+
 	ID3D11Buffer* ConstantBuffer = nullptr;					// Stores shaders to send to the video card.
 	ID3D11Buffer* MeshVertexBuffer = nullptr;
 	ID3D11Buffer* MeshIndexBuffer = nullptr;
 
 	Environment SpacialEnvironment;							// Contains the World, View, and Projection matrices.
+
+	std::vector<Object> WorldObjects;
 
 	// Graphics control options. -------------------------------------------------------------------->
 	int FrameSyncControl = 0;		// Should the refresh rate be locked to the maximum on the device? "0" means no, "1" means yes. V-SYNC.
@@ -43,7 +48,7 @@ public:
 	int VertexCount = 0;
 
 	// Setup render target and present.
-	void PresentFromRenderTarget();
+	void PresentFromRenderTarget(Object Obj);
 
 	// Release the held references in memory through DirectX.
 	void ReleaseInterfaces();
