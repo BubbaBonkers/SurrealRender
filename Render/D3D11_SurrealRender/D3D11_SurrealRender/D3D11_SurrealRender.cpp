@@ -16,6 +16,7 @@
 #include "GeneralPixelShaders.csh"
 
 using namespace NRB;
+using namespace DirectX;
 
 // Holds *Device, *SwapChain, *Context, *RenderTargetView, and Viewport.
 DisplayAgent MainDisplay;
@@ -170,6 +171,13 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    Swap.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
    Swap.SampleDesc.Count = 1;
 
+   MainDisplay.AspectRatio = (Swap.BufferDesc.Width / Swap.BufferDesc.Height);
+
+   UINT flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
+#ifdef _DEBUG
+   flags = flags | D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
    // Create and set the Device and SwapChain variables using DirectX.
    HRESULT hr;
    hr = D3D11CreateDeviceAndSwapChain(  nullptr, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_DEBUG, 
@@ -190,10 +198,29 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    // Vertex data for the triangle.
    Vertex Triangle[] =
    {
-       { { 0, 0.5f, 0, 1 }, { 1, 1, 1, 1 } },
-       { { 0.5f, -0.5f, 0, 1 }, { 1, 1, 1, 1 } },
-       { { -0.5f, -0.5f, 0, 1 }, { 1, 1, 1, 1 } }
+       // Front Face.
+       { { 0, 1.0f, 0, 1 }, { 1, 1, 1, 1 } },
+       { { 0.25f, -0.25f, -0.25f, 1 }, { 1, 0, 1, 1 } },
+       { { -0.25f, -0.25f, -0.25f, 1 }, { 1, 1, 0, 1 } },
+
+       // Right Face.
+       { { 0, 1.0f, 0, 1 }, { 1, 1, 1, 1 } },
+       { { 0.25f, -0.25f, 0.25f, 1 }, { 1, 0, 1, 1 } },
+       { { 0.25f, -0.25f, -0.25f, 1 }, { 1, 1, 0, 1 } },
+
+       // Back Face.
+       { { 0, 1.0f, 0, 1 }, { 1, 1, 1, 1 } },
+       { { -0.25f, -0.25f, 0.25f, 1 }, { 1, 0, 1, 1 } },
+       { { 0.25f, -0.25f, 0.25f, 1 }, { 1, 1, 0, 1 } },
+
+       // Left Face.
+       { { 0, 1.0f, 0, 1 }, { 1, 1, 1, 1 } },
+       { { -0.25f, -0.25f, -0.25f, 1 }, { 1, 0, 1, 1 } },
+       { { -0.25f, -0.25f, 0.25f, 1 }, { 1, 1, 0, 1 } }
    };
+
+   // Set couter for number of Vertices in the current item being drawn.
+   MainDisplay.VertexCount = ARRAYSIZE(Triangle);
 
    // Load the Triangle onto the card.
    D3D11_BUFFER_DESC BufferDescription;
@@ -202,7 +229,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    ZeroMemory(&SubData, sizeof(SubData));
 
    BufferDescription.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-   BufferDescription.ByteWidth = sizeof(Triangle) * 3;
+   BufferDescription.ByteWidth = sizeof(Vertex) * MainDisplay.VertexCount;
    BufferDescription.CPUAccessFlags = 0;
    BufferDescription.MiscFlags = 0;
    BufferDescription.StructureByteStride = 0;
@@ -225,6 +252,19 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    };
 
    hr = MainDisplay.Device->CreateInputLayout(InputDesc, 2, GeneralVertexShaders, sizeof(GeneralVertexShaders), &MainDisplay.InputLayout);
+
+   // Create the constant buffer.
+   ZeroMemory(&BufferDescription, sizeof(BufferDescription));
+
+   BufferDescription.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+   BufferDescription.ByteWidth = sizeof(DisplayAgent::Environment);
+   BufferDescription.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+   BufferDescription.MiscFlags = 0;
+   BufferDescription.StructureByteStride = 0;
+   BufferDescription.Usage = D3D11_USAGE_DYNAMIC;
+
+   // Create the Buffer to put the model on.
+   hr = MainDisplay.Device->CreateBuffer(&BufferDescription, nullptr, &MainDisplay.ConstantBuffer);
 
    return TRUE;
 }

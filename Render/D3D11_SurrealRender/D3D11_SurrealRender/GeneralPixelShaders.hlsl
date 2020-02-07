@@ -1,4 +1,10 @@
-float4 main() : SV_TARGET
+struct OutputVertex
 {
-	return float4(1.0f, 0.0f, 0.0f, 1.0f);
+	float4 Position : SV_POSITION;
+	float4 Color : COLOR;
+};
+
+float4 main(OutputVertex InputPixel) : SV_TARGET
+{
+	return InputPixel.Color;
 }
