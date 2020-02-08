@@ -177,7 +177,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    Swap.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
    Swap.SampleDesc.Count = 1;
 
-   MainDisplay.AspectRatio = (Swap.BufferDesc.Width / Swap.BufferDesc.Height);
+   MainDisplay.AspectRatio = ((float)Swap.BufferDesc.Width / (float)Swap.BufferDesc.Height);
 
    UINT flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
 #ifdef _DEBUG

@@ -35,7 +35,7 @@ public:
 
 	// Graphics control options. -------------------------------------------------------------------->
 	int FrameSyncControl = 0;		// Should the refresh rate be locked to the maximum on the device? "0" means no, "1" means yes. V-SYNC.
-	float AspectRatio = 1.0f;		// Aspect Ratio for the view. Set automatically.
+	float AspectRatio = 1.8667f;		// Aspect Ratio for the view. Set automatically.
 	float FieldOfViewDeg = 90.0f;	// Field of view in degrees.
 
 	int VertexCount = 0;
