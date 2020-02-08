@@ -249,6 +249,22 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    hr = MainDisplay.Device->CreateInputLayout(InputDesc, 3, GeneralMeshVertexShaders, sizeof(GeneralMeshVertexShaders), &MainDisplay.InputLayout);
 
+   // Create Z-Buffer and View. Multisampling/Antialiasing can be done here.
+   D3D11_TEXTURE2D_DESC ZDesc;
+   ZeroMemory(&ZDesc, sizeof(ZDesc));
+   ZDesc.ArraySize = 1;
+   ZDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+   ZDesc.Width = Swap.BufferDesc.Width;
+   ZDesc.Height = Swap.BufferDesc.Height;
+   ZDesc.Format = DXGI_FORMAT_D32_FLOAT;
+   ZDesc.Usage = D3D11_USAGE_DEFAULT;
+   ZDesc.MipLevels = 1;
+   ZDesc.SampleDesc.Count = 1;
+
+   hr = MainDisplay.Device->CreateTexture2D(&ZDesc, nullptr, &MainDisplay.ZBuffer);
+
+   MainDisplay.Device->CreateDepthStencilView(MainDisplay.ZBuffer, nullptr, &MainDisplay.ZBufferView);
+
    // Create the constant buffer.
    ZeroMemory(&BufferDescription, sizeof(BufferDescription));
 

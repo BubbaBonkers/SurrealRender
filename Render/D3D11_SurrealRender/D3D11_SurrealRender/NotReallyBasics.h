@@ -125,7 +125,7 @@ namespace NRB
 	};
 
 	// A structure containing the most basic information for an object in the 3D scene. One object contains data for Vertices and their Color/Position, the number of vertices in the object, and other data for the object.
-	struct Object
+	class Object
 	{
 	public:
 		// Spacial cognition for object class.

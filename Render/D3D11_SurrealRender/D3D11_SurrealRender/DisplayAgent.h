@@ -29,6 +29,9 @@ public:
 	ID3D11Buffer* MeshVertexBuffer = nullptr;
 	ID3D11Buffer* MeshIndexBuffer = nullptr;
 
+	ID3D11Texture2D* ZBuffer = nullptr;								// Z-Buffer for depth sorting.
+	ID3D11DepthStencilView* ZBufferView = nullptr;
+
 	Environment SpacialEnvironment;							// Contains the World, View, and Projection matrices.
 
 	std::vector<Object> WorldObjects;

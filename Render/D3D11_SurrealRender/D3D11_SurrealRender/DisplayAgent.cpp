@@ -24,10 +24,11 @@ void DisplayAgent::PresentFromRenderTarget(Object Obj)
 {
     float Color[] = { 0.0f, 1.0f, 1.0f, 1.0f };
     Context->ClearRenderTargetView(RenderTargetView, Color);
+    Context->ClearDepthStencilView(ZBufferView, D3D11_CLEAR_DEPTH, 1, 0);
 
     // Setup Render Targets.
     ID3D11RenderTargetView* TempRTV[] = { RenderTargetView };       // Output manager.
-    Context->OMSetRenderTargets(1, TempRTV, 0);
+    Context->OMSetRenderTargets(1, TempRTV, ZBufferView);
     Context->RSSetViewports(1, &Viewport);                          // This is the Rasterizer.
     Context->IASetInputLayout(InputLayout);                         // Input assembler.
     
@@ -38,16 +39,16 @@ void DisplayAgent::PresentFromRenderTarget(Object Obj)
     Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     Context->VSSetShader(MeshVertexShader, 0, 0);                       // Vertex Shader stage.
     Context->PSSetShader(PixelShader, 0, 0);                            // Pixel Shader stage.
+
     // Timer for rotation.
     static float Rotation = 0;
     Rotation += 0.0001f;
-
+    
     // World Matrix.
     XMMATRIX Temp = XMMatrixIdentity();                             // High speed type.
     Temp = XMMatrixTranslation(0, 0, 2);                            // Move camera back by 4.
     XMMATRIX Temp2 = XMMatrixRotationY(Rotation);
     Temp = XMMatrixMultiply(Temp2, Temp);
-    XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, Temp);         // Turn the slow speed WorldMatrix into high speed XMMATRIX type.
 
     // View Matrix.
     Temp = XMMatrixLookAtLH({ 0, 2, -5 }, { 0, 0, 0 }, { 0, 1, 0 });
@@ -77,6 +78,15 @@ void DisplayAgent::PresentFromRenderTarget(Object Obj)
     Context->IASetIndexBuffer(MeshIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
     Context->VSSetShader(MeshVertexShader, 0, 0);
     Context->IASetInputLayout(InputLayout);
+
+    // Modify the world matrix before drawing the next thing.
+    Temp = XMMatrixIdentity();
+    XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, Temp);
+
+    // Send data to the video card.
+    hr = Context->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &GPUBuffer);
+    memcpy(GPUBuffer.pData, &SpacialEnvironment, sizeof(Environment));
+    Context->Unmap(ConstantBuffer, 0);
 
     Context->DrawIndexed(Obj.Indices.size(), 0, 0);
 
