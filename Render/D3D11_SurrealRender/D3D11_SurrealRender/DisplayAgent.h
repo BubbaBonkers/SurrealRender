@@ -12,14 +12,6 @@ using namespace DirectX;
 class DisplayAgent
 {
 public:
-	// Hold matrix data for the environment including World, View, Projection, and other items.
-	struct Environment
-	{
-		XMFLOAT4X4 WorldMatrix;
-		XMFLOAT4X4 ViewMatrix;
-		XMFLOAT4X4 ProjectionMatrix;
-	};
-
 	ID3D11Device*				Device = nullptr;
 	IDXGISwapChain*				SwapChain = nullptr;
 	ID3D11DeviceContext*		Context = nullptr;
@@ -43,7 +35,8 @@ public:
 
 	// Graphics control options. -------------------------------------------------------------------->
 	int FrameSyncControl = 0;		// Should the refresh rate be locked to the maximum on the device? "0" means no, "1" means yes. V-SYNC.
-	float AspectRatio = 1.0f;
+	float AspectRatio = 1.0f;		// Aspect Ratio for the view. Set automatically.
+	float FieldOfViewDeg = 90.0f;	// Field of view in degrees.
 
 	int VertexCount = 0;
 

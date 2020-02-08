@@ -112,15 +112,25 @@ namespace NRB
 	{
 	public:
 		Vector4		Position;				// The position of this vertex in 3D space.
-		RGBAColor	Color;					// The color of this vertext position.
 		Vector3		Normal;					// The normal data of this vertex.
 		Vector2		Texture;				// Texture data for this vertex.
+	};
+
+	// Hold matrix data for the environment including World, View, Projection, and other items.
+	struct Environment
+	{
+		DirectX::XMFLOAT4X4 WorldMatrix;
+		DirectX::XMFLOAT4X4 ViewMatrix;
+		DirectX::XMFLOAT4X4 ProjectionMatrix;
 	};
 
 	// A structure containing the most basic information for an object in the 3D scene. One object contains data for Vertices and their Color/Position, the number of vertices in the object, and other data for the object.
 	struct Object
 	{
 	public:
+		// Spacial cognition for object class.
+		DirectX::XMFLOAT4X4 WorldMatrix;
+
 		const char* Name;					// The name of this object for debugging.
 		std::vector<Vertex> Vertices;		// The Position and Color data for each vertex.
 		std::vector<int> Indices;			// The Index data for the model.
@@ -131,10 +141,16 @@ namespace NRB
 		// Create the basic information in this object by using input values. Basic object, no meshes.
 		void CreateObject(const char* DebugName, std::vector<Vertex> VertexData, std::vector<int> IndexData, bool bHide = false)
 		{
+			// Setup debug information.
 			Name = DebugName;
+			bIsVisible = bHide;
+
+			// Setup model/mesh information.
 			Vertices = VertexData;
 			Indices = IndexData;
-			bIsVisible = bHide;
+
+			// Setup spacial cognition.
+			XMStoreFloat4x4(&WorldMatrix, DirectX::XMMatrixIdentity());
 		}
 
 		// Same as CreateObject base, but this one takes a File Name for the mesh to load into the object.
@@ -142,7 +158,7 @@ namespace NRB
 		{
 			// Set basic information about this object.
 			Name = DebugName;
-			bIsVisible = Hide;
+			bIsVisible = !Hide;
 
 			// Load mesh data into this object.
 			LoadMesh(FileName);
@@ -191,7 +207,7 @@ namespace NRB
 				Vertices.resize(Item_Vertex_Count);
 
 				// Read in the vertex data to our list.
-				file.read((char*)Vertices.data(), sizeof(Vertex) * Item_Vertex_Count);
+				file.read((char*)Vertices.data(), sizeof(Vertex) * Item_Vertex_Count); // sizeof(Vertex)
 
 				// Example mesh conditioning if needed, to fix up the flip.
 				for (auto& v : Vertices)
@@ -213,6 +229,8 @@ namespace NRB
 					Tri[0] = Tri[2];
 					Tri[2] = Temp;
 				}
+
+				int x = sizeof(Vertex);
 
 				// Close the file.
 				file.close();

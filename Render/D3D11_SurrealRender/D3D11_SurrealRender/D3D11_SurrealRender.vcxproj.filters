@@ -74,9 +74,6 @@
     <FxCompile Include="GeneralPixelShaders.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="GeneralVertexShaders.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="GeneralMeshVertexShaders.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>

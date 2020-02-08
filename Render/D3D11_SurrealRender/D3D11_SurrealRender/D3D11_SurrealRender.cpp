@@ -201,58 +201,14 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    MainDisplay.Viewport.MinDepth = 0;
    MainDisplay.Viewport.MaxDepth = 1;
 
-   // Vertex data for the triangle.
-   Vertex Triangle[] =
-   {
-       // Front Face.
-       { { 0, 1.0f, 0, 1 }, { 1, 1, 1, 1 } },
-       { { 0.25f, -0.25f, -0.25f, 1 }, { 1, 0, 1, 1 } },
-       { { -0.25f, -0.25f, -0.25f, 1 }, { 1, 1, 0, 1 } },
-
-       // Right Face.
-       { { 0, 1.0f, 0, 1 }, { 1, 1, 1, 1 } },
-       { { 0.25f, -0.25f, 0.25f, 1 }, { 1, 0, 1, 1 } },
-       { { 0.25f, -0.25f, -0.25f, 1 }, { 1, 1, 0, 1 } },
-
-       // Back Face.
-       { { 0, 1.0f, 0, 1 }, { 1, 1, 1, 1 } },
-       { { -0.25f, -0.25f, 0.25f, 1 }, { 1, 0, 1, 1 } },
-       { { 0.25f, -0.25f, 0.25f, 1 }, { 1, 1, 0, 1 } },
-
-       // Left Face.
-       { { 0, 1.0f, 0, 1 }, { 1, 1, 1, 1 } },
-       { { -0.25f, -0.25f, -0.25f, 1 }, { 1, 0, 1, 1 } },
-       { { -0.25f, -0.25f, 0.25f, 1 }, { 1, 1, 0, 1 } }
-   };
-
-   // Set couter for number of Vertices in the current item being drawn.
-   MainDisplay.VertexCount = ARRAYSIZE(Triangle);
-
-   // Load the Triangle onto the card.
-   D3D11_BUFFER_DESC BufferDescription;
-   D3D11_SUBRESOURCE_DATA SubData;
-   ZeroMemory(&BufferDescription, sizeof(BufferDescription));
-   ZeroMemory(&SubData, sizeof(SubData));
-
-   BufferDescription.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-   BufferDescription.ByteWidth = sizeof(Vertex) * MainDisplay.VertexCount;
-   BufferDescription.CPUAccessFlags = 0;
-   BufferDescription.MiscFlags = 0;
-   BufferDescription.StructureByteStride = 0;
-   BufferDescription.Usage = D3D11_USAGE_IMMUTABLE;
-
-   SubData.pSysMem = Triangle;
-
-
-
    // Create the cube.mesh for testing the object creation.
    Object CubeTest;
    CubeTest.CreateObject("TestingCube", "Assets/cube.mesh");             // Create the object and initialize information.
    MainDisplay.WorldObjects.push_back(CubeTest);
 
    // Load the Cube object data into the video card.
-   BufferDescription;
-   SubData;
+   D3D11_BUFFER_DESC BufferDescription;
+   D3D11_SUBRESOURCE_DATA SubData;
    ZeroMemory(&BufferDescription, sizeof(BufferDescription));
    ZeroMemory(&SubData, sizeof(SubData));
 
@@ -278,27 +234,14 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    // Load the new mesh shader.
    hr = MainDisplay.Device->CreateVertexShader(GeneralMeshVertexShaders, sizeof(GeneralMeshVertexShaders), nullptr, &MainDisplay.MeshVertexShader);
 
-
-
-   // Create the Buffer to put the model on.
-   hr = MainDisplay.Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay.MeshIndexBuffer);
-
    // Write, Compile, and Load the shaders.
    //hr = MainDisplay.Device->CreateVertexShader(GeneralVertexShaders, sizeof(GeneralVertexShaders), nullptr, &MainDisplay.VertexShader);
    hr = MainDisplay.Device->CreatePixelShader(GeneralPixelShaders, sizeof(GeneralPixelShaders), nullptr, &MainDisplay.PixelShader);
 
-   /*// This is for the pyrimid.
    // Describe it to DirectX.
    D3D11_INPUT_ELEMENT_DESC InputDesc[] =
    {
-       {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-       {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
-   };
-   */
-   // Describe it to DirectX.
-   D3D11_INPUT_ELEMENT_DESC InputDesc[] =
-   {
-       {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+       {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
        {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0}
    };
@@ -310,7 +253,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    ZeroMemory(&BufferDescription, sizeof(BufferDescription));
 
    BufferDescription.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-   BufferDescription.ByteWidth = sizeof(DisplayAgent::Environment);
+   BufferDescription.ByteWidth = sizeof(Environment);
    BufferDescription.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
    BufferDescription.MiscFlags = 0;
    BufferDescription.StructureByteStride = 0;
@@ -321,7 +264,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    // Load the complex mesh onto the video card.
    BufferDescription.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-   BufferDescription.ByteWidth = sizeof(CubeTest.Vertices.data());
+   BufferDescription.ByteWidth = (CubeTest.Vertices.size() * sizeof(Vertex));
    BufferDescription.CPUAccessFlags = 0;
    BufferDescription.MiscFlags = 0;
    BufferDescription.StructureByteStride = 0;
@@ -332,10 +275,13 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    // Create the Buffer to put the model on.
    hr = MainDisplay.Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay.MeshVertexBuffer);
    BufferDescription.BindFlags = D3D11_BIND_INDEX_BUFFER;
-   BufferDescription.ByteWidth = sizeof(CubeTest.Indices);
+   BufferDescription.ByteWidth = (CubeTest.Indices.size() * sizeof(int));
    SubData.pSysMem = CubeTest.Indices.data();
 
    hr = MainDisplay.Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay.MeshIndexBuffer);
+
+   // Load the new mesh shader.
+   hr = MainDisplay.Device->CreateVertexShader(GeneralMeshVertexShaders, sizeof(GeneralMeshVertexShaders), nullptr, &MainDisplay.MeshVertexShader);
 
    return TRUE;
 }
