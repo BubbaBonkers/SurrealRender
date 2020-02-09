@@ -7,7 +7,15 @@
 // Called every frame.
 void DisplayAgent::Update(float DeltaTime)
 {
-
+    // Call update on all objects and cameras to check for changes in state.
+    for (unsigned int i = 0; i < WorldCameras.size(); ++i)
+    {
+        WorldCameras[i]->Update(DeltaTime);
+    }
+    for (unsigned int i = 0; i < WorldObjects.size(); ++i)
+    {
+        WorldObjects[i]->Update(DeltaTime);
+    }
 }
 
 // Called before the window closes.
@@ -52,15 +60,9 @@ Object* DisplayAgent::CreateObject(const char* DebugName, std::vector<Vertex> Ve
 
 void DisplayAgent::PresentFromRenderTarget(Object* Obj)
 {
-    // Call update on all objects and cameras to check for changes in state.
-    for (unsigned int i = 0; i < WorldCameras.size(); ++i)
-    {
-        WorldCameras[i]->Update();
-    }
-    for (unsigned int i = 0; i < WorldObjects.size(); ++i)
-    {
-        WorldObjects[i]->Update();
-    }
+    // Update all objects and cameras.
+    // Come back and finish the DeltaTime parameter.
+    Update(1.0f);
 
     Context->ClearRenderTargetView(RenderTargetView, RenderBackgroundColor);
     Context->ClearDepthStencilView(ZBufferView, D3D11_CLEAR_DEPTH, 1.0f, 0);

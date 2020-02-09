@@ -177,7 +177,7 @@ namespace NRB
 		// ---------- Functionality for this object. --------------------------------------------------------------------------------------------->
 
 		// Called every frame.
-		void Update()
+		void Update(float DeltaTime)
 		{
 
 		}
@@ -288,6 +288,12 @@ namespace NRB
 				file.close();
 			}
 		}
+
+		// Called before the window closes.
+		void EndPlay()
+		{
+
+		}
 	};
 
 	class Camera
@@ -301,15 +307,21 @@ namespace NRB
 		// Camera controls and settings.
 		float AspectRatio = 1.8667f;										// Aspect Ratio for the view. Set automatically.
 		float FieldOfViewDeg = 90.0f;										// Field of view in degrees.
+		Object* AttachTarget = nullptr;										// The object this camera is attached to (following). Leave as "nullptr" to disable attachment.
 
 
 
 		// ---------- Functionality for this object. --------------------------------------------------------------------------------------------->
 
 		// Called every frame.
-		void Update()
+		void Update(float DeltaTime)
 		{
-
+			// Check if there is a valid AttachTarget.
+			if (AttachTarget != nullptr)
+			{
+				// Snap camera to the AttachTarget object.
+				SpacialEnvironment.WorldMatrix = AttachTarget->WorldMatrix;
+			}
 		}
 
 
@@ -319,10 +331,25 @@ namespace NRB
 		void CreateCamera(const char* DebugName)
 		{
 			Name = DebugName;
+			AttachTarget = nullptr;
 			XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, DirectX::XMMatrixIdentity());
 			XMStoreFloat4x4(&SpacialEnvironment.ViewMatrix, DirectX::XMMatrixIdentity());
 			XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, 0.1f, 1000.0f);
 			XMStoreFloat4x4(&SpacialEnvironment.ProjectionMatrix, Temp);
+		}
+
+
+
+		// ---------- Memory management. -------------------------------------------------------------------------------------------------------->
+
+		// Called before the window closes.
+		void EndPlay()
+		{
+			if (AttachTarget != nullptr)
+			{
+				AttachTarget = nullptr;
+				delete AttachTarget;
+			}
 		}
 	};
 }
