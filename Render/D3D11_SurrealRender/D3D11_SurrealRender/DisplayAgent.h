@@ -20,8 +20,12 @@ public:
 
 	ID3D11Buffer*				VertexBuffer = nullptr;
 	ID3D11InputLayout*			InputLayout = nullptr;
-	ID3D11VertexShader*			VertexShader = nullptr;		// HLSL
 	ID3D11PixelShader*			PixelShader = nullptr;		// HLSL
+
+	// Texture variables.
+	ID3D11ShaderResourceView*	ShaderResourceView = nullptr;
+	ID3D11SamplerState*			LinearSamplerState = nullptr;
+	ID3D11Texture2D*			DiffuseTexture = nullptr;
 
 	ID3D11VertexShader* MeshVertexShader = nullptr;			// HLSL
 
@@ -34,19 +38,33 @@ public:
 
 	Environment SpacialEnvironment;							// Contains the World, View, and Projection matrices.
 
-	std::vector<Object> WorldObjects;
+	std::vector<Camera*> WorldCameras;
+	std::vector<Object*> WorldObjects;
 
 	// Graphics control options. -------------------------------------------------------------------->
-	int FrameSyncControl = 0;		// Should the refresh rate be locked to the maximum on the device? "0" means no, "1" means yes. V-SYNC.
-	float AspectRatio = 1.8667f;		// Aspect Ratio for the view. Set automatically.
-	float FieldOfViewDeg = 90.0f;	// Field of view in degrees.
-
-	int VertexCount = 0;
+	float RenderBackgroundColor[4] = { 0.45f, 0.45f, 0.45f, 0.45f };	// The color of the default background to set the renderer to when clearing DepthStencil and Viewport.
+	int FrameSyncControl = 0;											// Should the refresh rate be locked to the maximum on the device? "0" means no, "1" means yes. V-SYNC.
+	float AspectRatio = 1.8667f;										// Aspect Ratio for the view. Set automatically.
+	float FieldOfViewDeg = 90.0f;										// Field of view in degrees.
 
 	// Setup render target and present.
-	void PresentFromRenderTarget(Object Obj);
+	void PresentFromRenderTarget(Object* Obj);
 
-	// Release the held references in memory through DirectX.
-	void ReleaseInterfaces();
+	// Create a new object.
+	Object* CreateObject(const char* DebugName, const char* FileName, bool bHide = false);
+	Object* CreateObject(const char* DebugName, std::vector<Vertex> VertexData, std::vector<int> IndexData, bool bHide = false);
+
+	// Create a new camera.
+	Camera* CreateCamera(const char* DebugName);
+
+	// Called every frame.
+	void Update(float DeltaTime);
+
+	// Called before the window closes.
+	void EndPlay();
+
+	// Memory managent.
+	void ReleaseInterfaces();													// Release the held references in memory through DirectX.
+	void ReleasePointerObjects(bool bCameras = true, bool bObjects = true);		// Delete all pointers before close.
 };
 

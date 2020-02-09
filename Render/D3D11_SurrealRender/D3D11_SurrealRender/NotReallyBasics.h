@@ -4,6 +4,8 @@
 
 #pragma once
 
+using namespace DirectX;
+
 namespace NRB
 {
 	// A color consisting of Red, Green, Blue, and Alpha in format RGBA. Uses arrays and floats.
@@ -119,9 +121,9 @@ namespace NRB
 	// Hold matrix data for the environment including World, View, Projection, and other items.
 	struct Environment
 	{
-		DirectX::XMFLOAT4X4 WorldMatrix;
-		DirectX::XMFLOAT4X4 ViewMatrix;
-		DirectX::XMFLOAT4X4 ProjectionMatrix;
+		XMFLOAT4X4 WorldMatrix;
+		XMFLOAT4X4 ViewMatrix;
+		XMFLOAT4X4 ProjectionMatrix;
 	};
 
 	// A structure containing the most basic information for an object in the 3D scene. One object contains data for Vertices and their Color/Position, the number of vertices in the object, and other data for the object.
@@ -129,7 +131,7 @@ namespace NRB
 	{
 	public:
 		// Spacial cognition for object class.
-		DirectX::XMFLOAT4X4 WorldMatrix;
+		XMFLOAT4X4 WorldMatrix;
 
 		const char* Name;					// The name of this object for debugging.
 		std::vector<Vertex> Vertices;		// The Position and Color data for each vertex.
@@ -137,6 +139,68 @@ namespace NRB
 
 		// Below is extra functionality in case it is needed in the future.
 		bool bIsVisible = true;
+
+
+
+		// ---------- Get information about this object. ----------------------------------------------------------------------------------------->
+
+		// Move this object in a 3D world. Returns the object's new World Matrix after movement.
+		XMFLOAT4X4 AddMovementInput(float x, float y, float z)
+		{
+			// Translate the object in world space.
+			XMMATRIX Base = XMLoadFloat4x4(&WorldMatrix);
+			XMMATRIX Translated = XMMatrixTranslation(x, y, z);
+			Translated = XMMatrixMultiply(Base, Translated);
+
+			// Store the new information.
+			XMStoreFloat4x4(&WorldMatrix, Translated);
+
+			return WorldMatrix;
+		}
+
+		// Rotate this object in a 3D world. Return the object's new World Matrix after rotation.
+		XMFLOAT4X4 AddRotationInput(float Pitch, float Yaw, float Roll)
+		{
+			// Rotate the object in world space.
+			XMMATRIX Base = XMLoadFloat4x4(&WorldMatrix);
+			XMMATRIX Rotated = XMMatrixRotationRollPitchYaw(Yaw, Pitch, Roll);
+			Rotated = XMMatrixMultiply(Base, Rotated);
+
+			// Store the new information.
+			XMStoreFloat4x4(&WorldMatrix, Rotated);
+
+			return WorldMatrix;
+		}
+
+
+
+		// ---------- Functionality for this object. --------------------------------------------------------------------------------------------->
+
+		// Called every frame.
+		void Update()
+		{
+
+		}
+
+
+
+		// ---------- Get information about this object. ----------------------------------------------------------------------------------------->
+
+		// Count how many vertices are in the Vertices array and return it as an int.
+		int CountVertices()
+		{
+			return Vertices.size();
+		}
+
+		// Count how many indices are in the Indices array and return it as an int.
+		int CountIndices()
+		{
+			return Indices.size();
+		}
+
+
+
+		// ---------- Stuff for loading meshes, setting up the Object, and initializing values.--------------------------------------------------->
 
 		// Create the basic information in this object by using input values. Basic object, no meshes.
 		void CreateObject(const char* DebugName, std::vector<Vertex> VertexData, std::vector<int> IndexData, bool bHide = false)
@@ -162,18 +226,6 @@ namespace NRB
 
 			// Load mesh data into this object.
 			LoadMesh(FileName);
-		}
-
-		// Count how many vertices are in the Vertices array and return it as an int.
-		int CountVertices()
-		{
-			return Vertices.size();
-		}
-
-		// Count how many indices are in the Indices array and return it as an int.
-		int CountIndices()
-		{
-			return Indices.size();
 		}
 
 		// Load mesh information such as Texture, Vertices, Indices, and UVs onto this object using a .mesh object file as MeshFileName.
@@ -235,6 +287,42 @@ namespace NRB
 				// Close the file.
 				file.close();
 			}
+		}
+	};
+
+	class Camera
+	{
+	public:
+		// This camera's World, View, and Projection matrices for world manipulation.
+		Environment SpacialEnvironment;
+
+		const char* Name;					// The name of this object for debugging.
+
+		// Camera controls and settings.
+		float AspectRatio = 1.8667f;										// Aspect Ratio for the view. Set automatically.
+		float FieldOfViewDeg = 90.0f;										// Field of view in degrees.
+
+
+
+		// ---------- Functionality for this object. --------------------------------------------------------------------------------------------->
+
+		// Called every frame.
+		void Update()
+		{
+
+		}
+
+
+
+		// ---------- Stuff for loading meshes, setting up the Object, and initializing values.--------------------------------------------------->
+		
+		void CreateCamera(const char* DebugName)
+		{
+			Name = DebugName;
+			XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, DirectX::XMMatrixIdentity());
+			XMStoreFloat4x4(&SpacialEnvironment.ViewMatrix, DirectX::XMMatrixIdentity());
+			XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, 0.1f, 1000.0f);
+			XMStoreFloat4x4(&SpacialEnvironment.ProjectionMatrix, Temp);
 		}
 	};
 }
