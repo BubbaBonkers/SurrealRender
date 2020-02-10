@@ -43,7 +43,7 @@ public:
 
 	// Graphics control options. -------------------------------------------------------------------->
 	float RenderBackgroundColor[4] = { 0.45f, 0.45f, 0.45f, 0.45f };	// The color of the default background to set the renderer to when clearing DepthStencil and Viewport.
-	int FrameSyncControl = 0;											// Should the refresh rate be locked to the maximum on the device? "0" means no, "1" means yes. V-SYNC.
+	int FrameSyncControl = 1;											// Should the refresh rate be locked to the maximum on the device? "0" means no, "1" means yes. V-SYNC.
 	float AspectRatio = 1.8667f;										// Aspect Ratio for the view. Set automatically.
 	float FieldOfViewDeg = 90.0f;										// Field of view in degrees.
 
