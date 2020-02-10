@@ -48,14 +48,14 @@ public:
 	float FieldOfViewDeg = 90.0f;										// Field of view in degrees.
 
 	// Setup render target and present.
-	void PresentFromRenderTarget(Object* Obj);
+	void PresentFromRenderTarget(Camera* Cam, Object* Obj, float DeltaTime = 1.0f);
 
 	// Create a new object.
 	Object* CreateObject(const char* DebugName, const char* FileName, bool bHide = false);
 	Object* CreateObject(const char* DebugName, std::vector<Vertex> VertexData, std::vector<int> IndexData, bool bHide = false);
 
-	// Create a new camera.
-	Camera* CreateCamera(const char* DebugName);
+	// Create a new camera, leave AttachTo as "nullptr" to not attach to an object.
+	Camera* CreateCamera(const char* DebugName, Object* AttachTo = nullptr);
 
 	// Called every frame.
 	void Update(float DeltaTime);

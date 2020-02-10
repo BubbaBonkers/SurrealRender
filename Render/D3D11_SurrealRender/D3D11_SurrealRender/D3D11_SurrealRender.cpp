@@ -15,6 +15,7 @@
 #include "DisplayAgent.h"       // Holds *Device, *SwapChain, *Context, *RenderTargetView, and Viewport.
 #include "NotReallyBasics.h"    // Some basic functions and structs for math and color type things.
 #include "DDSTextureLoader.h"
+#include "Timer.h"				// Timer for things that need it.
 
 // Shader files.
 //#include "GeneralVertexShaders.csh"
@@ -24,8 +25,13 @@
 using namespace NRB;
 using namespace DirectX;
 
+// For debug console.
+FILE* conout;
+FILE* conerr;
+
 // Holds *Device, *SwapChain, *Context, *RenderTargetView, and Viewport.
 DisplayAgent MainDisplay;
+Timer Clock;
 
 #define MAX_LOADSTRING 100
 
@@ -70,9 +76,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     // Create the message structure.
     MSG msg;
 
+    // Start internal timer.
+    Clock.Start();
+
     // Main message loop:
     while (true)    // PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
     {
+        // Update timer for clock.
+        float DeltaTime = Clock.GetElapsedMiliseconds() * 0.001f;
+        Clock.Restart();
+
+        MainDisplay.Update(DeltaTime);
+
         // Peek at a message in the queue. 
         //Format: message (MSG Structure), the window to peek at the messages from (nullptr is all in current thread), first message in range, last message in range (both can also retrieve last mouse or last key input specifically).
         PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE);
@@ -90,8 +105,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             break;
         }
 
-        // This function sets up the render targets and presents the image.
-        MainDisplay.PresentFromRenderTarget(MainDisplay.WorldObjects[0]);
+        MainDisplay.PresentFromRenderTarget(MainDisplay.WorldCameras[0], MainDisplay.WorldObjects[0]);
     }
 
     // Release all used D3D interfaces.
@@ -142,6 +156,11 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
+    // For debug console.
+    AllocConsole();
+    freopen_s(&conout, "CONOUT$", "w", stdout);
+    freopen_s(&conerr, "CONOUT$", "w", stderr);
+
    hInst = hInstance; // Store instance handle in our global variable
 
    // Create the window for DirectX to display through.
@@ -177,11 +196,13 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    Swap.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
    Swap.SampleDesc.Count = 1;
 
-   // Create the camera to view the world through.
-   Camera* MainCamera = MainDisplay.CreateCamera("Eyes");
-
    // Create the cube.mesh for testing the object creation.
    Object* CubeTest = MainDisplay.CreateObject("TestingCube", "Assets/cube.mesh");
+
+   // Create the camera to view the world through.
+   Camera* MainCamera = MainDisplay.CreateCamera("Eyes");
+   MainCamera->AddMovementInput(0, -3.0f, 5.0f);
+   MainCamera->AddRotationInput(-0.5f, 0, 0);
 
    // Set aspect ratio for world and cameras.
    MainDisplay.AspectRatio = ((float)Swap.BufferDesc.Width / (float)Swap.BufferDesc.Height);

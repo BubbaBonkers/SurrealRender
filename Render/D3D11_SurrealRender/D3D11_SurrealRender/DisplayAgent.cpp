@@ -1,5 +1,6 @@
 #include "DisplayAgent.h"
 #include "DDSTextureLoader.h"
+#include <iostream>
 
 #define SAFE_RELEASE(ptr) { if(ptr) { ptr->Release(); ptr = nullptr; } }
 #define D3DXToRadian(degree) ((degree) * (D3DX_PI / 180.0f))
@@ -7,6 +8,8 @@
 // Called every frame.
 void DisplayAgent::Update(float DeltaTime)
 {
+    std::cout << '\n' << '\n' << "Display: " << DeltaTime << '\n' << '\n' << '\n';
+
     // Call update on all objects and cameras to check for changes in state.
     for (unsigned int i = 0; i < WorldCameras.size(); ++i)
     {
@@ -25,12 +28,12 @@ void DisplayAgent::EndPlay()
     ReleasePointerObjects(true, true);
 }
 
-// Create a new camera in 3D space.
-Camera* DisplayAgent::CreateCamera(const char* DebugName)
+// Create a new camera, leave AttachTo as "nullptr" to not attach to an object.
+Camera* DisplayAgent::CreateCamera(const char* DebugName, Object* AttachTo)
 {
     // Create the camera to view the world through.
     Camera* MainCamera = new Camera();;
-    MainCamera->CreateCamera(DebugName);
+    MainCamera->CreateCamera(DebugName, AttachTo);
     WorldCameras.push_back(MainCamera);
 
     return MainCamera;
@@ -58,11 +61,11 @@ Object* DisplayAgent::CreateObject(const char* DebugName, std::vector<Vertex> Ve
     return NewObject;
 }
 
-void DisplayAgent::PresentFromRenderTarget(Object* Obj)
+void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float DeltaTime)
 {
     // Update all objects and cameras.
     // Come back and finish the DeltaTime parameter.
-    Update(1.0f);
+    Update(DeltaTime);
 
     Context->ClearRenderTargetView(RenderTargetView, RenderBackgroundColor);
     Context->ClearDepthStencilView(ZBufferView, D3D11_CLEAR_DEPTH, 1.0f, 0);
@@ -95,30 +98,43 @@ void DisplayAgent::PresentFromRenderTarget(Object* Obj)
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
     hr = Device->CreateSamplerState(&sampDesc, &LinearSamplerState);
 
-    // Timer for rotation.
-    static float Rotation = 0;
-    Rotation += 0.0001f;
-    
-    // World Matrix.
-    XMMATRIX Temp;                             // High speed type.
-    XMMATRIX Temp2;
+    // Math Stuffs.
 
-    // View Matrix.
-    Temp = XMMatrixLookAtLH({ 0, 2, -5 }, { 0, 0, 0 }, { 0, 1, 0 });
-    XMStoreFloat4x4(&SpacialEnvironment.ViewMatrix, Temp);
+    // Translate the object in world space.
+    Obj->AddRotationInput(0, 10.0f, 0);
 
-    // Projection.
-    Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, 0.1f, 1000.0f);
-    XMStoreFloat4x4(&SpacialEnvironment.ProjectionMatrix, Temp);
+    // GPU Mapping.
 
+    // Send data to the graphics card.
     D3D11_MAPPED_SUBRESOURCE GPUBuffer;
     hr = Context->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &GPUBuffer);
-    memcpy(GPUBuffer.pData, &SpacialEnvironment, sizeof(Environment));
+    //memcpy(GPUBuffer.pData, &SpacialEnvironment, sizeof(Environment));
+    memcpy(GPUBuffer.pData, &Cam->SpacialEnvironment, sizeof(Environment));
+    Context->Unmap(ConstantBuffer, 0);
+
+    // Send data to the graphics card.
+    D3D11_MAPPED_SUBRESOURCE GPUBufferB;
+    hr = Context->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &GPUBufferB);
+    //memcpy(GPUBuffer.pData, &SpacialEnvironment, sizeof(Environment));
+    memcpy(GPUBufferB.pData, &Obj->WorldMatrix, sizeof(Environment));
+    Context->Unmap(ConstantBuffer, 0);
+
+    // Set the cube to use the world matrix with View and Projection taken into account.
+    XMMATRIX ObjWorld = XMLoadFloat4x4(&Obj->WorldMatrix);
+    XMMATRIX CamView = XMLoadFloat4x4(&Cam->SpacialEnvironment.ViewMatrix);
+    XMMATRIX CamProjection = XMLoadFloat4x4(&Cam->SpacialEnvironment.ProjectionMatrix);
+    XMStoreFloat4x4(&Obj->WorldMatrix, XMMatrixMultiply(XMMatrixMultiply(ObjWorld, CamView), CamProjection));
+
+    hr = Context->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &GPUBuffer);
+    //memcpy(GPUBuffer.pData, &SpacialEnvironment, sizeof(Environment));
+    memcpy(GPUBuffer.pData, &Cam->SpacialEnvironment, sizeof(Environment));
     Context->Unmap(ConstantBuffer, 0);
 
     // Apply matrix math in vertex shader and connect the constant buffer to the pipeline.
     ID3D11Buffer* Constants[] = { ConstantBuffer };
     Context->VSSetConstantBuffers(0, 1, Constants);
+
+    // Shader Stuffs.
 
     // Vertex and Pixel Shader stages.
     Context->VSSetShader(MeshVertexShader, 0, 0);
@@ -126,16 +142,7 @@ void DisplayAgent::PresentFromRenderTarget(Object* Obj)
     Context->PSSetShaderResources(0, 1, &ShaderResourceView);
     Context->PSSetSamplers(0, 1, &LinearSamplerState);
 
-    // Modify the world matrix before drawing the next thing.
-    Temp = XMMatrixIdentity();
-    Temp2 = XMMatrixRotationY(Rotation);
-    Temp = XMMatrixMultiply(Temp2, Temp);
-    XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, Temp);
-
-    // Send data to the video card.
-    hr = Context->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &GPUBuffer);
-    memcpy(GPUBuffer.pData, &SpacialEnvironment, sizeof(Environment));
-    Context->Unmap(ConstantBuffer, 0);
+    // Draw and Present.
 
     Context->DrawIndexed(Obj->Indices.size(), 0, 0);
 

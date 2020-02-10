@@ -1,6 +1,7 @@
 #include <vector>
 #include <fstream>
 #include <Windows.h>
+#include <iostream>
 
 #pragma once
 
@@ -149,7 +150,7 @@ namespace NRB
 		{
 			// Translate the object in world space.
 			XMMATRIX Base = XMLoadFloat4x4(&WorldMatrix);
-			XMMATRIX Translated = XMMatrixTranslation(x, y, z);
+			XMMATRIX Translated = XMMatrixTranslation(XMConvertToRadians(x), XMConvertToRadians(y), XMConvertToRadians(z));
 			Translated = XMMatrixMultiply(Base, Translated);
 
 			// Store the new information.
@@ -163,7 +164,7 @@ namespace NRB
 		{
 			// Rotate the object in world space.
 			XMMATRIX Base = XMLoadFloat4x4(&WorldMatrix);
-			XMMATRIX Rotated = XMMatrixRotationRollPitchYaw(Yaw, Pitch, Roll);
+			XMMATRIX Rotated = XMMatrixRotationRollPitchYaw(Pitch, Yaw, Roll);
 			Rotated = XMMatrixMultiply(Base, Rotated);
 
 			// Store the new information.
@@ -179,7 +180,7 @@ namespace NRB
 		// Called every frame.
 		void Update(float DeltaTime)
 		{
-
+			
 		}
 
 
@@ -214,7 +215,7 @@ namespace NRB
 			Indices = IndexData;
 
 			// Setup spacial cognition.
-			XMStoreFloat4x4(&WorldMatrix, DirectX::XMMatrixIdentity());
+			XMStoreFloat4x4(&WorldMatrix, XMMatrixIdentity());
 		}
 
 		// Same as CreateObject base, but this one takes a File Name for the mesh to load into the object.
@@ -226,6 +227,9 @@ namespace NRB
 
 			// Load mesh data into this object.
 			LoadMesh(FileName);
+
+			// Setup spacial cognition.
+			XMStoreFloat4x4(&WorldMatrix, XMMatrixIdentity());
 		}
 
 		// Load mesh information such as Texture, Vertices, Indices, and UVs onto this object using a .mesh object file as MeshFileName.
@@ -311,11 +315,44 @@ namespace NRB
 
 
 
+		// ---------- Get information about this object. ----------------------------------------------------------------------------------------->
+
+		// Move this object in a 3D world. Returns the object's new World Matrix after movement.
+		XMFLOAT4X4 AddMovementInput(float x, float y, float z)
+		{
+			// Translate the object in world space.
+			XMMATRIX Base = XMLoadFloat4x4(&SpacialEnvironment.WorldMatrix);
+			XMMATRIX Translated = XMMatrixTranslation(x, y, z);
+			Translated = XMMatrixMultiply(Base, Translated);
+
+			// Store the new information.
+			XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, Translated);
+
+			return SpacialEnvironment.WorldMatrix;
+		}
+
+		// Rotate this object in a 3D world. Return the object's new World Matrix after rotation.
+		XMFLOAT4X4 AddRotationInput(float Pitch, float Yaw, float Roll)
+		{
+			// Rotate the object in world space.
+			XMMATRIX Base = XMLoadFloat4x4(&SpacialEnvironment.WorldMatrix);
+			XMMATRIX Rotated = XMMatrixRotationRollPitchYaw(Pitch, Yaw, Roll);
+			Rotated = XMMatrixMultiply(Base, Rotated);
+
+			// Store the new information.
+			XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, Rotated);
+
+			return SpacialEnvironment.WorldMatrix;
+		}
+
 		// ---------- Functionality for this object. --------------------------------------------------------------------------------------------->
 
 		// Called every frame.
 		void Update(float DeltaTime)
 		{
+			std::cout << DeltaTime << '\n';
+			std::cout << (1.0f / DeltaTime) << '\n' << '\n';
+
 			// Check if there is a valid AttachTarget.
 			if (AttachTarget != nullptr)
 			{
@@ -328,12 +365,13 @@ namespace NRB
 
 		// ---------- Stuff for loading meshes, setting up the Object, and initializing values.--------------------------------------------------->
 		
-		void CreateCamera(const char* DebugName)
+		// Create a camera, give it a debug name, then attach it to an object. Leave AttachTo as "nullptr" to not attach this camera to an object.
+		void CreateCamera(const char* DebugName, Object* AttachTo = nullptr)
 		{
 			Name = DebugName;
-			AttachTarget = nullptr;
-			XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, DirectX::XMMatrixIdentity());
-			XMStoreFloat4x4(&SpacialEnvironment.ViewMatrix, DirectX::XMMatrixIdentity());
+			AttachTarget = AttachTo;
+			XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, XMMatrixIdentity());
+			XMStoreFloat4x4(&SpacialEnvironment.ViewMatrix, XMMatrixIdentity());
 			XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, 0.1f, 1000.0f);
 			XMStoreFloat4x4(&SpacialEnvironment.ProjectionMatrix, Temp);
 		}
