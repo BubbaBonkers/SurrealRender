@@ -156,18 +156,18 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
+   hInst = hInstance; // Store instance handle in our global variable
+
+    // Create the window for DirectX to display through.
+    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPED | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SIZEBOX,
+    CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+    // Hide the menu bar with File options.
+    SetMenu(hWnd, NULL);
+
     // For debug console.
     AllocConsole();
     freopen_s(&conout, "CONOUT$", "w", stdout);
     freopen_s(&conerr, "CONOUT$", "w", stderr);
-
-   hInst = hInstance; // Store instance handle in our global variable
-
-   // Create the window for DirectX to display through.
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
-   // Hide the menu bar with File options.
-   SetMenu(hWnd, NULL);
 
    if (!hWnd)
    {
@@ -205,11 +205,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    MainCamera->AddRotationInput(-0.5f, 0, 0);
 
    // Set aspect ratio for world and cameras.
-   MainDisplay.AspectRatio = ((float)Swap.BufferDesc.Width / (float)Swap.BufferDesc.Height);
-   for (unsigned int i = 0; i < MainDisplay.WorldCameras.size(); ++i)
-   {
-       MainDisplay.WorldCameras[i]->AspectRatio = MainDisplay.AspectRatio;
-   }
+   MainDisplay.ChangeAspectRatio((float)Swap.BufferDesc.Width / (float)Swap.BufferDesc.Height);
 
    UINT flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
 #ifdef _DEBUG
@@ -387,6 +383,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
         }
         break;
+    case WM_SIZE:
+    {
+        INT NewWidth = LOWORD(lParam);
+        INT NewHeight = HIWORD(lParam);
+
+        MainDisplay.ChangeAspectRatio((float)NewWidth / (float)NewHeight);
+    }
+    break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;

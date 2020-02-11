@@ -2,6 +2,7 @@
 #include <fstream>
 #include <Windows.h>
 #include <iostream>
+#include <DirectXMath.h>
 
 #pragma once
 
@@ -114,7 +115,7 @@ namespace NRB
 	struct Vertex
 	{
 	public:
-		Vector4		Position;				// The position of this vertex in 3D space.
+		Vector3		Position;				// The position of this vertex in 3D space.
 		Vector3		Normal;					// The normal data of this vertex.
 		Vector2		Texture;				// Texture data for this vertex.
 	};
@@ -317,7 +318,7 @@ namespace NRB
 		Object* AttachTarget = nullptr;										// The object this camera is attached to (following). Leave as "nullptr" to disable attachment.
 
 		// Camera physical attributes.
-		float CameraMovementSpeed = 0.025f;
+		float CameraMovementSpeed = 15.0f;
 
 
 
@@ -376,6 +377,12 @@ namespace NRB
 			XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, Rotated);
 
 			return SpacialEnvironment.WorldMatrix;
+		}
+
+		void LookAtLocation(float x, float y, float z)
+		{
+			// Look at a specified object in the world.
+			XMMatrixLookAtLH({ SpacialEnvironment.WorldMatrix._11, SpacialEnvironment.WorldMatrix._12, SpacialEnvironment.WorldMatrix._13 }, { x, y, z }, { 0, 1, 0 });
 		}
 
 		// ---------- Functionality for this object. --------------------------------------------------------------------------------------------->
@@ -440,27 +447,27 @@ namespace NRB
 				// Increase and decrease camera movement speed.
 				if (GetKeyState('B') & 0x8000)
 				{
-					if (CameraMovementSpeed < 0.05f)
+					if (CameraMovementSpeed < 40.0f)
 					{
-						CameraMovementSpeed += (0.0005f * DeltaTime);
+						CameraMovementSpeed += (17.0f * DeltaTime);
 					}
 				}
 				if (GetKeyState('V') & 0x8000)
 				{
-					if (CameraMovementSpeed > 0.01f)
+					if (CameraMovementSpeed > 1.0f)
 					{
-						CameraMovementSpeed -= (0.0005f * DeltaTime);
+						CameraMovementSpeed -= (17.0f * DeltaTime);
 					}
 				}
 
 				// Field of view controls.
 				if (GetKeyState('N') & 0x8000)
 				{
-					RefreshCameraFOV((FieldOfViewDeg + (0.5f * DeltaTime)));
+					RefreshCameraFOV((FieldOfViewDeg + (6.0f * DeltaTime)));
 				}
 				if (GetKeyState('M') & 0x8000)
 				{
-					RefreshCameraFOV((FieldOfViewDeg - (0.5f * DeltaTime)));
+					RefreshCameraFOV((FieldOfViewDeg - (6.0f * DeltaTime)));
 				}
 			}
 			else
@@ -489,6 +496,15 @@ namespace NRB
 		void RefreshCameraFOV(float FOV = 90.0f)
 		{
 			FieldOfViewDeg = FOV;
+
+			XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, 0.1f, 1000.0f);
+			XMStoreFloat4x4(&SpacialEnvironment.ProjectionMatrix, Temp);
+		}
+
+		// Sets a new Aspect Ratio and changes the projection matrix.
+		void RefreshCameraAspectRatio(float InRatio = 1.9f)
+		{
+			AspectRatio = InRatio;
 
 			XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, 0.1f, 1000.0f);
 			XMStoreFloat4x4(&SpacialEnvironment.ProjectionMatrix, Temp);

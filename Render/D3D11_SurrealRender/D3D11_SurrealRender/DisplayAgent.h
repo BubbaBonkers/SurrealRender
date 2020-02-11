@@ -12,6 +12,13 @@ using namespace DirectX;
 class DisplayAgent
 {
 public:
+	struct ConstantBuffer
+	{
+		XMMATRIX WorldMatrix;
+		XMMATRIX ViewMatrix;
+		XMMATRIX ProjectionMatrix;
+	};
+
 	ID3D11Device*				Device = nullptr;
 	IDXGISwapChain*				SwapChain = nullptr;
 	ID3D11DeviceContext*		Context = nullptr;
@@ -43,8 +50,7 @@ public:
 
 	// Graphics control options. -------------------------------------------------------------------->
 	float RenderBackgroundColor[4] = { 0.45f, 0.45f, 0.45f, 0.45f };	// The color of the default background to set the renderer to when clearing DepthStencil and Viewport.
-	int FrameSyncControl = 1;											// Should the refresh rate be locked to the maximum on the device? "0" means no, "1" means yes. V-SYNC.
-	float AspectRatio = 1.8667f;										// Aspect Ratio for the view. Set automatically.
+	int FrameSyncControl = 0;											// Should the refresh rate be locked to the maximum on the device? "0" means no, "1" means yes. V-SYNC.
 	float FieldOfViewDeg = 90.0f;										// Field of view in degrees.
 
 	// Setup render target and present.
@@ -59,6 +65,7 @@ public:
 
 	// Called every frame.
 	void Update(float DeltaTime);
+	void ChangeAspectRatio(float InRatio);
 
 	// Called before the window closes.
 	void EndPlay();

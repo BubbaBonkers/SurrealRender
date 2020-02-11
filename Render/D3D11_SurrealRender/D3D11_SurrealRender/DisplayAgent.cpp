@@ -8,7 +8,7 @@
 // Called every frame.
 void DisplayAgent::Update(float DeltaTime)
 {
-    std::cout << '\n' << '\n' << "Display: " << DeltaTime << '\n' << '\n' << '\n';
+    std::cout << '\n' << "Display: " << DeltaTime << '\n';
 
     // Call update on all objects and cameras to check for changes in state.
     for (unsigned int i = 0; i < WorldCameras.size(); ++i)
@@ -61,12 +61,17 @@ Object* DisplayAgent::CreateObject(const char* DebugName, std::vector<Vertex> Ve
     return NewObject;
 }
 
+void DisplayAgent::ChangeAspectRatio(float InRatio)
+{
+    for (unsigned int i = 0; i < WorldCameras.size(); ++i)
+    {
+        WorldCameras[i]->RefreshCameraAspectRatio(InRatio);
+    }
+}
+
 void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float DeltaTime)
 {
     // Update all objects and cameras.
-    // Come back and finish the DeltaTime parameter.
-    Update(DeltaTime);
-
     Context->ClearRenderTargetView(RenderTargetView, RenderBackgroundColor);
     Context->ClearDepthStencilView(ZBufferView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
@@ -112,13 +117,6 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
     memcpy(GPUBuffer.pData, &Cam->SpacialEnvironment, sizeof(Environment));
     Context->Unmap(ConstantBuffer, 0);
 
-    // Send data to the graphics card.
-    D3D11_MAPPED_SUBRESOURCE GPUBufferB;
-    hr = Context->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &GPUBufferB);
-    //memcpy(GPUBuffer.pData, &SpacialEnvironment, sizeof(Environment));
-    memcpy(GPUBufferB.pData, &Obj->WorldMatrix, sizeof(Environment));
-    Context->Unmap(ConstantBuffer, 0);
-
     // Set the cube to use the world matrix with View and Projection taken into account.
     XMMATRIX ObjWorld = XMLoadFloat4x4(&Obj->WorldMatrix);
     XMMATRIX CamView = XMLoadFloat4x4(&Cam->SpacialEnvironment.ViewMatrix);
@@ -129,6 +127,18 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
     //memcpy(GPUBuffer.pData, &SpacialEnvironment, sizeof(Environment));
     memcpy(GPUBuffer.pData, &Cam->SpacialEnvironment, sizeof(Environment));
     Context->Unmap(ConstantBuffer, 0);
+    /*
+    ConstantBuffer cb1;
+    cb1.mWorld = XMMatrixTranspose(g_World);
+    cb1.mView = XMMatrixTranspose(g_View);
+    cb1.mProjection = XMMatrixTranspose(g_Projection);
+    cb1.vLightDir[0] = vLightDirs[0];
+    cb1.vLightDir[1] = vLightDirs[1];
+    cb1.vLightColor[0] = vLightColors[0];
+    cb1.vLightColor[1] = vLightColors[1];
+    cb1.vOutputColor = XMFLOAT4(0, 0, 0, 0);
+    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb1, 0, 0);
+    */
 
     // Apply matrix math in vertex shader and connect the constant buffer to the pipeline.
     ID3D11Buffer* Constants[] = { ConstantBuffer };

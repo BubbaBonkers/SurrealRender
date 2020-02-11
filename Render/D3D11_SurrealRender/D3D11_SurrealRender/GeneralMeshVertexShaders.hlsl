@@ -1,6 +1,6 @@
 struct VS_INPUT
 {
-	float4 Position : POSITION;
+	float3 Position : POSITION;
 	float3 Normal : NORMAL;
 	float2 Texture : TEXCOORD0;
 };
@@ -31,7 +31,7 @@ VS_OUTPUT main(VS_INPUT Input)
 	VS_OUTPUT Output = (VS_OUTPUT)0;
 	Output.Position = float4(Input.Position.xyz, 1);
 	Output.Texture = Input.Texture;
-	Output.Normal = Input.Normal;
+	Output.Normal = mul(WorldMatrix, float4(Input.Normal.xyz,0)).xyz;
 
 	Output.Position = mul(WorldMatrix, Output.Position);
 	Output.Position = mul(ViewMatrix, Output.Position);

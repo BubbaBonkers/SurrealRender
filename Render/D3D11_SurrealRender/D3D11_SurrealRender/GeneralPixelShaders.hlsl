@@ -10,12 +10,13 @@ struct VS_OUTPUT
 
 float4 main(VS_OUTPUT InputPixel) : SV_TARGET
 {
-    float4 FinalColor = 0;
+    float4 FinalColor = float4(0, 0, 0, 0);
 
-    FinalColor *= txDiffuse.Sample(samLinear, InputPixel.Texture);
+    FinalColor = txDiffuse.Sample(samLinear, InputPixel.Texture);
     FinalColor.a = 1;
 
-	return float4(InputPixel.Texture, 1, 0);
+	//return float4(InputPixel.Texture, 1, 0);
+    return FinalColor;
 }
 
 /*
