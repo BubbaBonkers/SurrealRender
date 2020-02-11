@@ -156,9 +156,9 @@
   <ItemGroup>
     <ClInclude Include="D3D11_SurrealRender.h" />
     <ClInclude Include="DDSTextureLoader.h" />
-    <ClInclude Include="DirectionalLight.h" />
     <ClInclude Include="DisplayAgent.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="NotLights.h" />
     <ClInclude Include="NotReallyBasics.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
@@ -167,8 +167,8 @@
   <ItemGroup>
     <ClCompile Include="D3D11_SurrealRender.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
-    <ClCompile Include="DirectionalLight.cpp" />
     <ClCompile Include="DisplayAgent.cpp" />
+    <ClCompile Include="NotLights.cpp" />
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>

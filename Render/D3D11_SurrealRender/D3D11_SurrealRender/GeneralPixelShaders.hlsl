@@ -8,9 +8,26 @@ struct VS_OUTPUT
 	float2 Texture : TEXCOORD1;
 };
 
+cbuffer ConstantBuffer : register(b0)	// b for Buffer, and 0 for slot 0 in GPU.
+{
+    float4x4 WorldMatrix;
+    float4x4 ViewMatrix;
+    float4x4 ProjectionMatrix;
+    float4 DirectionalLightDirections[1];
+    float4 DirectionalLightColors[1];
+    float DirectionalLightIntensities[1];
+};
+
 float4 main(VS_OUTPUT InputPixel) : SV_TARGET
 {
     float4 FinalColor = float4(0, 0, 0, 0);
+    FinalColor += saturate((dot((float3)DirectionalLightDirections[0], InputPixel.Normal) * DirectionalLightIntensities[0]) * DirectionalLightColors[0]);
+    /*
+    for (int i = 0; i < 1; i++)
+    {
+        FinalColor += ((saturate(dot((float3)DirectionalLightDirections[i], InputPixel.Normal) * DirectionalLightColors[i])) * DirectionalLightIntensities[i]);
+    }
+    */
 
     FinalColor = txDiffuse.Sample(samLinear, InputPixel.Texture);
     FinalColor.a = 1;

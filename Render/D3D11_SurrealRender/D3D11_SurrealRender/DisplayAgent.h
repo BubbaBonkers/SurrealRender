@@ -12,11 +12,14 @@ using namespace DirectX;
 class DisplayAgent
 {
 public:
-	struct ConstantBuffer
+	struct ConstBuffer
 	{
 		XMMATRIX WorldMatrix;
 		XMMATRIX ViewMatrix;
 		XMMATRIX ProjectionMatrix;
+		XMFLOAT4 DirectionalLightDirections[1];
+		XMFLOAT4 DirectionalLightColors[1];
+		float DirectionalLightIntensities[1];
 	};
 
 	ID3D11Device*				Device = nullptr;
@@ -47,6 +50,7 @@ public:
 
 	std::vector<Camera*> WorldCameras;
 	std::vector<Object*> WorldObjects;
+	std::vector<DirectionalLight*> WorldDirectionalLights;
 
 	// Graphics control options. -------------------------------------------------------------------->
 	float RenderBackgroundColor[4] = { 0.45f, 0.45f, 0.45f, 0.45f };	// The color of the default background to set the renderer to when clearing DepthStencil and Viewport.
@@ -62,6 +66,9 @@ public:
 
 	// Create a new camera, leave AttachTo as "nullptr" to not attach to an object.
 	Camera* CreateCamera(const char* DebugName, Object* AttachTo = nullptr);
+
+	// Create a new directional light.
+	DirectionalLight* CreateDirectionalLight(const char* DebugName, XMFLOAT4 direction, XMFLOAT4 color = { 1, 1, 1, 1 }, float intensity = 1.0f);
 
 	// Called every frame.
 	void Update(float DeltaTime);

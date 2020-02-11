@@ -61,6 +61,16 @@ Object* DisplayAgent::CreateObject(const char* DebugName, std::vector<Vertex> Ve
     return NewObject;
 }
 
+// Create a new camera, leave AttachTo as "nullptr" to not attach to an object.
+DirectionalLight* DisplayAgent::CreateDirectionalLight(const char* DebugName, XMFLOAT4 direction, XMFLOAT4 color, float intensity)
+{
+    DirectionalLight* NewDirLight = new DirectionalLight();
+    NewDirLight->CreateLight(DebugName, direction, color, intensity);
+    WorldDirectionalLights.push_back(NewDirLight);
+
+    return NewDirLight;
+}
+
 void DisplayAgent::ChangeAspectRatio(float InRatio)
 {
     for (unsigned int i = 0; i < WorldCameras.size(); ++i)
@@ -110,45 +120,37 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
 
     // GPU Mapping.
 
-    // Send data to the graphics card.
-    D3D11_MAPPED_SUBRESOURCE GPUBuffer;
-    hr = Context->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &GPUBuffer);
-    //memcpy(GPUBuffer.pData, &SpacialEnvironment, sizeof(Environment));
-    memcpy(GPUBuffer.pData, &Cam->SpacialEnvironment, sizeof(Environment));
-    Context->Unmap(ConstantBuffer, 0);
-
     // Set the cube to use the world matrix with View and Projection taken into account.
     XMMATRIX ObjWorld = XMLoadFloat4x4(&Obj->WorldMatrix);
     XMMATRIX CamView = XMLoadFloat4x4(&Cam->SpacialEnvironment.ViewMatrix);
     XMMATRIX CamProjection = XMLoadFloat4x4(&Cam->SpacialEnvironment.ProjectionMatrix);
     XMStoreFloat4x4(&Obj->WorldMatrix, XMMatrixMultiply(XMMatrixMultiply(ObjWorld, CamView), CamProjection));
 
-    hr = Context->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &GPUBuffer);
-    //memcpy(GPUBuffer.pData, &SpacialEnvironment, sizeof(Environment));
-    memcpy(GPUBuffer.pData, &Cam->SpacialEnvironment, sizeof(Environment));
+    // Create the ConstBuffer to send to the graphics card ConstantBuffer.
+    ConstBuffer cb1;
+    cb1.WorldMatrix = XMLoadFloat4x4(&Cam->SpacialEnvironment.WorldMatrix);//XMMatrixTranspose(XMLoadFloat4x4(&Cam->SpacialEnvironment.WorldMatrix));
+    cb1.ViewMatrix = XMLoadFloat4x4(&Cam->SpacialEnvironment.ViewMatrix);//XMMatrixTranspose(XMLoadFloat4x4(&Cam->SpacialEnvironment.ViewMatrix));
+    cb1.ProjectionMatrix = XMLoadFloat4x4(&Cam->SpacialEnvironment.ProjectionMatrix);//XMMatrixTranspose(XMLoadFloat4x4(&Cam->SpacialEnvironment.ProjectionMatrix));
+    cb1.DirectionalLightDirections[0] = WorldDirectionalLights[0]->Direction;
+    cb1.DirectionalLightColors[0] = WorldDirectionalLights[0]->Color;
+    cb1.DirectionalLightIntensities[0] = WorldDirectionalLights[0]->Intensity;
+
+    // Send data to the graphics card.
+    D3D11_MAPPED_SUBRESOURCE GPUBufferCDS;
+    Context->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &GPUBufferCDS);
+    memcpy(GPUBufferCDS.pData, &cb1, sizeof(cb1));
     Context->Unmap(ConstantBuffer, 0);
-    /*
-    ConstantBuffer cb1;
-    cb1.mWorld = XMMatrixTranspose(g_World);
-    cb1.mView = XMMatrixTranspose(g_View);
-    cb1.mProjection = XMMatrixTranspose(g_Projection);
-    cb1.vLightDir[0] = vLightDirs[0];
-    cb1.vLightDir[1] = vLightDirs[1];
-    cb1.vLightColor[0] = vLightColors[0];
-    cb1.vLightColor[1] = vLightColors[1];
-    cb1.vOutputColor = XMFLOAT4(0, 0, 0, 0);
-    g_pImmediateContext->UpdateSubresource(g_pConstantBuffer, 0, nullptr, &cb1, 0, 0);
-    */
 
     // Apply matrix math in vertex shader and connect the constant buffer to the pipeline.
     ID3D11Buffer* Constants[] = { ConstantBuffer };
-    Context->VSSetConstantBuffers(0, 1, Constants);
 
     // Shader Stuffs.
 
     // Vertex and Pixel Shader stages.
     Context->VSSetShader(MeshVertexShader, 0, 0);
+    Context->VSSetConstantBuffers(0, 1, Constants);
     Context->PSSetShader(PixelShader, 0, 0);                            // Pixel Shader stage.
+    Context->PSSetConstantBuffers(0, 1, Constants);
     Context->PSSetShaderResources(0, 1, &ShaderResourceView);
     Context->PSSetSamplers(0, 1, &LinearSamplerState);
 

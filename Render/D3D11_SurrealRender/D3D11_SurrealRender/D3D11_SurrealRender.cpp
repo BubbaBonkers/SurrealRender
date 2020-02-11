@@ -16,6 +16,7 @@
 #include "NotReallyBasics.h"    // Some basic functions and structs for math and color type things.
 #include "DDSTextureLoader.h"
 #include "Timer.h"				// Timer for things that need it.
+#include "NotLights.h"          // Lighting objects to emit light, duh!
 
 // Shader files.
 //#include "GeneralVertexShaders.csh"
@@ -30,7 +31,7 @@ FILE* conout;
 FILE* conerr;
 
 // Holds *Device, *SwapChain, *Context, *RenderTargetView, and Viewport.
-DisplayAgent MainDisplay;
+DisplayAgent* MainDisplay = nullptr;
 Timer Clock;
 
 #define MAX_LOADSTRING 100
@@ -63,6 +64,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     LoadStringW(hInstance, IDC_D3D11SURREALRENDER, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
 
+    // Create the display agent.
+    MainDisplay = new DisplayAgent();
+
     // Perform application initialization:
     // Attempt to initialize the hInstance of the window, if failed, return a false value for the app.
     if (!InitInstance (hInstance, nCmdShow))
@@ -76,6 +80,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     // Create the message structure.
     MSG msg;
 
+
     // Start internal timer.
     Clock.Start();
 
@@ -86,7 +91,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         float DeltaTime = Clock.GetElapsedMiliseconds() * 0.001f;
         Clock.Restart();
 
-        MainDisplay.Update(DeltaTime);
+        MainDisplay->Update(DeltaTime);
 
         // Peek at a message in the queue. 
         //Format: message (MSG Structure), the window to peek at the messages from (nullptr is all in current thread), first message in range, last message in range (both can also retrieve last mouse or last key input specifically).
@@ -105,11 +110,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             break;
         }
 
-        MainDisplay.PresentFromRenderTarget(MainDisplay.WorldCameras[0], MainDisplay.WorldObjects[0]);
+        MainDisplay->PresentFromRenderTarget(MainDisplay->WorldCameras[0], MainDisplay->WorldObjects[0]);
     }
 
     // Release all used D3D interfaces.
-    MainDisplay.EndPlay();
+    MainDisplay->EndPlay();
 
     return (int) msg.wParam;
 }
@@ -197,15 +202,18 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    Swap.SampleDesc.Count = 1;
 
    // Create the cube.mesh for testing the object creation.
-   Object* CubeTest = MainDisplay.CreateObject("TestingCube", "Assets/cube.mesh");
+   Object* CubeTest = MainDisplay->CreateObject("TestingCube", "Assets/cube.mesh");
 
    // Create the camera to view the world through.
-   Camera* MainCamera = MainDisplay.CreateCamera("Eyes");
+   Camera* MainCamera = MainDisplay->CreateCamera("Eyes");
    MainCamera->AddMovementInput(0, -3.0f, 5.0f);
    MainCamera->AddRotationInput(-0.5f, 0, 0);
 
+   // Create a light.
+   MainDisplay->CreateDirectionalLight("Sunlight", { 0, 0, 0, 0 }, { 1, 1, 1, 1 }, 0.2f);
+
    // Set aspect ratio for world and cameras.
-   MainDisplay.ChangeAspectRatio((float)Swap.BufferDesc.Width / (float)Swap.BufferDesc.Height);
+   MainDisplay->ChangeAspectRatio((float)Swap.BufferDesc.Width / (float)Swap.BufferDesc.Height);
 
    UINT flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
 #ifdef _DEBUG
@@ -215,11 +223,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    // Create and set the Device and SwapChain variables using DirectX.
    HRESULT hr;
    hr = D3D11CreateDeviceAndSwapChain(  nullptr, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_DEBUG, 
-                                        &dx11, 1, D3D11_SDK_VERSION, &Swap, &MainDisplay.SwapChain, &MainDisplay.Device, 0, &MainDisplay.Context);
+                                        &dx11, 1, D3D11_SDK_VERSION, &Swap, &MainDisplay->SwapChain, &MainDisplay->Device, 0, &MainDisplay->Context);
 
    ID3D11Resource* BackBuffer = nullptr;                                                                          // Create the Back Buffer resource in DirectX.
-   hr = MainDisplay.SwapChain->GetBuffer(0, __uuidof(BackBuffer), (void**)&BackBuffer);                 // Get the Buffer through the Swap Chain.
-   hr = MainDisplay.Device->CreateRenderTargetView(BackBuffer, NULL, &MainDisplay.RenderTargetView);    // Create the RenterTargetView for the Device.
+   hr = MainDisplay->SwapChain->GetBuffer(0, __uuidof(BackBuffer), (void**)&BackBuffer);                 // Get the Buffer through the Swap Chain.
+   hr = MainDisplay->Device->CreateRenderTargetView(BackBuffer, NULL, &MainDisplay->RenderTargetView);    // Create the RenterTargetView for the Device.
    BackBuffer->Release();                                                                               // Remove one from the internal count of the Device.
 
    // Create Z-Buffer and View. Multisampling/Antialiasing can be done here.
@@ -234,21 +242,21 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    ZDesc.MipLevels = 1;
    ZDesc.SampleDesc.Count = 1;
    ZDesc.SampleDesc.Quality = 0;
-   hr = MainDisplay.Device->CreateTexture2D(&ZDesc, nullptr, &MainDisplay.ZBuffer);
+   hr = MainDisplay->Device->CreateTexture2D(&ZDesc, nullptr, &MainDisplay->ZBuffer);
 
    // Create the depth stencil view
    D3D11_DEPTH_STENCIL_VIEW_DESC descDSV = {};
    descDSV.Format = ZDesc.Format;
    descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
    descDSV.Texture2D.MipSlice = 0;
-   MainDisplay.Device->CreateDepthStencilView(MainDisplay.ZBuffer, nullptr, &MainDisplay.ZBufferView);
+   MainDisplay->Device->CreateDepthStencilView(MainDisplay->ZBuffer, nullptr, &MainDisplay->ZBufferView);
 
    // Setup the Viewport.
-   MainDisplay.Viewport.Width = Swap.BufferDesc.Width;
-   MainDisplay.Viewport.Height = Swap.BufferDesc.Height;
-   MainDisplay.Viewport.TopLeftX = MainDisplay.Viewport.TopLeftY = 0;
-   MainDisplay.Viewport.MinDepth = 0;
-   MainDisplay.Viewport.MaxDepth = 1;
+   MainDisplay->Viewport.Width = Swap.BufferDesc.Width;
+   MainDisplay->Viewport.Height = Swap.BufferDesc.Height;
+   MainDisplay->Viewport.TopLeftX = MainDisplay->Viewport.TopLeftY = 0;
+   MainDisplay->Viewport.MinDepth = 0;
+   MainDisplay->Viewport.MaxDepth = 1;
 
    // Load the Cube object data into the video card.
    D3D11_BUFFER_DESC BufferDescription;
@@ -266,20 +274,20 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    SubData.pSysMem = CubeTest->Vertices.data();
 
    // Vertex Buffer.
-   hr = MainDisplay.Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay.MeshVertexBuffer);
+   hr = MainDisplay->Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay->MeshVertexBuffer);
 
    // Index Buffer.
    BufferDescription.BindFlags = D3D11_BIND_INDEX_BUFFER;
    BufferDescription.ByteWidth = sizeof(Vertex) * CubeTest->Indices.size();
    SubData.pSysMem = CubeTest->Indices.data();
 
-   hr = MainDisplay.Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay.MeshIndexBuffer);
+   hr = MainDisplay->Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay->MeshIndexBuffer);
 
    // Load the new mesh shader.
-   hr = MainDisplay.Device->CreateVertexShader(GeneralMeshVertexShaders, sizeof(GeneralMeshVertexShaders), nullptr, &MainDisplay.MeshVertexShader);
+   hr = MainDisplay->Device->CreateVertexShader(GeneralMeshVertexShaders, sizeof(GeneralMeshVertexShaders), nullptr, &MainDisplay->MeshVertexShader);
 
    // Write, Compile, and Load the shaders.
-   hr = MainDisplay.Device->CreatePixelShader(GeneralPixelShaders, sizeof(GeneralPixelShaders), nullptr, &MainDisplay.PixelShader);
+   hr = MainDisplay->Device->CreatePixelShader(GeneralPixelShaders, sizeof(GeneralPixelShaders), nullptr, &MainDisplay->PixelShader);
 
    // Describe it to DirectX.
    D3D11_INPUT_ELEMENT_DESC InputDesc[] =
@@ -290,25 +298,25 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    };
 
 
-   hr = MainDisplay.Device->CreateInputLayout(InputDesc, 3, GeneralMeshVertexShaders, sizeof(GeneralMeshVertexShaders), &MainDisplay.InputLayout);
+   hr = MainDisplay->Device->CreateInputLayout(InputDesc, 3, GeneralMeshVertexShaders, sizeof(GeneralMeshVertexShaders), &MainDisplay->InputLayout);
 
-   MainDisplay.Context->IASetInputLayout(MainDisplay.InputLayout);                         // Input assembler.
+   MainDisplay->Context->IASetInputLayout(MainDisplay->InputLayout);                         // Input assembler.
 
    // Create the constant buffer.
    ZeroMemory(&BufferDescription, sizeof(BufferDescription));
 
    BufferDescription.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-   BufferDescription.ByteWidth = sizeof(Environment);
+   BufferDescription.ByteWidth = sizeof(DisplayAgent::ConstBuffer);
    BufferDescription.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
    BufferDescription.MiscFlags = 0;
    BufferDescription.StructureByteStride = 0;
    BufferDescription.Usage = D3D11_USAGE_DYNAMIC;
 
    // Create the Buffer to put the model on.
-   hr = MainDisplay.Device->CreateBuffer(&BufferDescription, nullptr, &MainDisplay.ConstantBuffer);
+   hr = MainDisplay->Device->CreateBuffer(&BufferDescription, nullptr, &MainDisplay->ConstantBuffer);
 
    // Load the Texture
-   CreateDDSTextureFromFile(MainDisplay.Device, L"Assets/Crate.dds", nullptr, &MainDisplay.ShaderResourceView);
+   CreateDDSTextureFromFile(MainDisplay->Device, L"Assets/Crate.dds", nullptr, &MainDisplay->ShaderResourceView);
 
    // Load the texture into the graphics card.
    D3D11_TEXTURE2D_DESC TextureDesc;
@@ -326,7 +334,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    TextureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
    TextureDesc.MiscFlags = 0;
 
-   MainDisplay.Device->CreateTexture2D(&TextureDesc, nullptr, &MainDisplay.DiffuseTexture);
+   MainDisplay->Device->CreateTexture2D(&TextureDesc, nullptr, &MainDisplay->DiffuseTexture);
 
    // Load the complex mesh onto the video card.
    BufferDescription.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -339,15 +347,15 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    SubData.pSysMem = CubeTest->Vertices.data();
 
    // Create the Buffer to put the model on.
-   hr = MainDisplay.Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay.MeshVertexBuffer);
+   hr = MainDisplay->Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay->MeshVertexBuffer);
    BufferDescription.BindFlags = D3D11_BIND_INDEX_BUFFER;
    BufferDescription.ByteWidth = (CubeTest->Indices.size() * sizeof(int));
    SubData.pSysMem = CubeTest->Indices.data();
 
-   hr = MainDisplay.Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay.MeshIndexBuffer);
+   hr = MainDisplay->Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay->MeshIndexBuffer);
 
    // Load the new mesh shader.
-   hr = MainDisplay.Device->CreateVertexShader(GeneralMeshVertexShaders, sizeof(GeneralMeshVertexShaders), nullptr, &MainDisplay.MeshVertexShader);
+   hr = MainDisplay->Device->CreateVertexShader(GeneralMeshVertexShaders, sizeof(GeneralMeshVertexShaders), nullptr, &MainDisplay->MeshVertexShader);
 
    return TRUE;
 }
@@ -388,7 +396,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         INT NewWidth = LOWORD(lParam);
         INT NewHeight = HIWORD(lParam);
 
-        MainDisplay.ChangeAspectRatio((float)NewWidth / (float)NewHeight);
+        MainDisplay->ChangeAspectRatio((float)NewWidth / (float)NewHeight);
     }
     break;
     case WM_DESTROY:

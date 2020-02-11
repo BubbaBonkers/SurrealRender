@@ -4,6 +4,8 @@
 #include <iostream>
 #include <DirectXMath.h>
 
+#include "NotLights.h"
+
 #pragma once
 
 using namespace DirectX;
@@ -314,7 +316,7 @@ namespace NRB
 
 		// Camera controls and settings.
 		float AspectRatio = 1.8667f;										// Aspect Ratio for the view. Set automatically.
-		float FieldOfViewDeg = 90.0f;										// Field of view in degrees.
+		float FieldOfViewDeg = 70.0f;										// Field of view in degrees.
 		Object* AttachTarget = nullptr;										// The object this camera is attached to (following). Leave as "nullptr" to disable attachment.
 
 		// Camera physical attributes.
@@ -410,7 +412,7 @@ namespace NRB
 				if ((MousePosition.x != TempMousePosition.x) && (MousePosition.y != TempMousePosition.y))
 				{
 					POINT NewPosition = { MousePosition.x - TempMousePosition.x, MousePosition.y - TempMousePosition.y };
-					AddRotationInput((NewPosition.y * 0.0025f), (NewPosition.x * 0.0025f), 0, true);
+					AddRotationInput((NewPosition.y * 0.005f), (NewPosition.x * 0.005f), 0, true);
 					std::cout << "X: " << NewPosition.x << "Y: " << NewPosition.y << '\n' << '\n';
 
 					GetCursorPos(&MousePosition);
@@ -463,11 +465,11 @@ namespace NRB
 				// Field of view controls.
 				if (GetKeyState('N') & 0x8000)
 				{
-					RefreshCameraFOV((FieldOfViewDeg + (6.0f * DeltaTime)));
+					RefreshCameraFOV((FieldOfViewDeg + (12.0f * DeltaTime)));
 				}
 				if (GetKeyState('M') & 0x8000)
 				{
-					RefreshCameraFOV((FieldOfViewDeg - (6.0f * DeltaTime)));
+					RefreshCameraFOV((FieldOfViewDeg - (12.0f * DeltaTime)));
 				}
 			}
 			else
