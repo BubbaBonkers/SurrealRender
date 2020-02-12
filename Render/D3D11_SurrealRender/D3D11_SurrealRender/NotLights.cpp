@@ -15,6 +15,29 @@ void DirectionalLight::CreateLight(const char* DebugName, XMFLOAT4 direction, XM
 	Intensity = intensity;
 }
 
+/*
+// Rotate this object in a 3D world. Return the object's new World Matrix after rotation. Set bBaseOnWorld to false if you want the rotation to be based on the current camera rotation rather than the world matrix. Set ignore DeltaTime to true to force the exact rotation and ignore the tick update.
+XMFLOAT4 DirectionalLight::AddRotationInput(float X, float Y, float Z, bool bIgnoreDeltaTime)
+{
+	float Multiplier = 1.0f;
+	if (bIgnoreDeltaTime)
+	{
+		Multiplier = 1.0f;
+	}
+	else
+	{
+		Multiplier = TickTime;
+	}
+
+	// Rotate the object in 3D space.
+	XMFLOAT4 RotateIt = { (X * Multiplier), (Y * Multiplier), (Z * Multiplier) };
+	XMFLOAT4 NewDir = { (Direction.x + RotateIt.x), (Direction.y + RotateIt.y), (Direction.z + RotateIt.z) };
+	XMStoreFloat4(&Direction, XMLoadFloat4(&NewDir));
+
+	return Direction;
+}
+*/
+
 // Initialize this light for use in the game world. Takes in a direction, color, and intensity. It also needs the DisplayAgent whose world list should have this light.
 void PointLight::CreateLight(const char* DebugName, XMFLOAT4 color, float intensity)
 {

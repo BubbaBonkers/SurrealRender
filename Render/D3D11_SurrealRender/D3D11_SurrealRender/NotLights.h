@@ -27,6 +27,8 @@ public:
 
 	// Initialize this light for use in the game world. Takes in a direction, color, and intensity.
 	void CreateLight(const char* DebugName, XMFLOAT4 direction, XMFLOAT4 color, float intensity = 1.0f);
+
+	//XMFLOAT4 AddRotationInput(float Pitch, float Yaw, float Roll, bool bIgnoreDeltaTime = false);
 };
 
 class PointLight : public NotLights

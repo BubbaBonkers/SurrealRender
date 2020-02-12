@@ -15,3 +15,4 @@ Controlling the Camera: Right click and hold in the viewport to take control of 
 Notes:
 	- The point light slowly rotates about and falls down from the scene, so the green light is the point light and will eventually disappear to show that it is dynamic.
 	- The cube will light up for the directional light, and get dim and dark for the ambient light.
+	- I have references not being released, I could not figure out what they were in time, so I did not mark the points on the rubric.
