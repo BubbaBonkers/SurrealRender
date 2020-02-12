@@ -6,48 +6,49 @@ struct VS_OUTPUT
 	float4 Position : SV_POSITION;
 	float3 Normal : NORMAL;
 	float2 Texture : TEXCOORD1;
+	float3 Wposition : WORLDPOSITION;
 };
 
 cbuffer ConstantBuffer : register(b0)	// b for Buffer, and 0 for slot 0 in GPU.
 {
-    float4x4 WorldMatrix;
-    float4x4 ViewMatrix;
-    float4x4 ProjectionMatrix;
-    float4 DirectionalLightDirections[1];
-    float4 DirectionalLightColors[1];
-    float DirectionalLightIntensities[1];
+	float4x4 WorldMatrix;
+	float4x4 ViewMatrix;
+	float4x4 ProjectionMatrix;
+	float4 AmbientLightColor;
+	float4 DirectionalLightDirections[1];
+	float4 PointLightPositions[1];
+	float4 DirectionalLightColors[1];
+	float4 PointLightColors[1];
+	float DirectionalLightIntensities;
+	float AmbientLightIntensity;
+	float PointLightIntensities;
+	float PadA;
 };
 
 float4 main(VS_OUTPUT InputPixel) : SV_TARGET
 {
-    float4 FinalColor = float4(0, 0, 0, 0);
-    FinalColor += saturate((dot((float3)DirectionalLightDirections[0], InputPixel.Normal) * DirectionalLightIntensities[0]) * DirectionalLightColors[0]);
-    /*
-    for (int i = 0; i < 1; i++)
-    {
-        FinalColor += ((saturate(dot((float3)DirectionalLightDirections[i], InputPixel.Normal) * DirectionalLightColors[i])) * DirectionalLightIntensities[i]);
-    }
-    */
-
-    FinalColor = txDiffuse.Sample(samLinear, InputPixel.Texture);
+    // Get pixel color for texture.
+	float4 FinalColor = txDiffuse.Sample(samLinear, InputPixel.Texture);
     FinalColor.a = 1;
+    
+    // Get the ambient lighting.
+	float4 Ambient = ((AmbientLightColor * FinalColor) * AmbientLightIntensity);
+    
+    // Get the directional lighting.
+	float LightRatio = saturate((dot(DirectionalLightDirections[0].xyz, InputPixel.Normal)) * DirectionalLightIntensities);
+	float4 D_Result = LightRatio * DirectionalLightColors[0] * FinalColor;
+	
+	// Get the point lights.
+    float3 LightDir = normalize(PointLightPositions[0].xyz - normalize(InputPixel.Wposition.xyz));
+	float P_LightRatio = saturate((dot(LightDir.xyz, normalize(InputPixel.Normal)) * PointLightIntensities));
+	float4 P_Result = P_LightRatio * PointLightColors[0] * FinalColor;
+	
+	// Attenuation for point light.
+    float P_Attenuation = 1.0f - clamp(length(PointLightPositions[0].xyz - normalize(InputPixel.Wposition.xyz)) / 50.0f, 0.0f, 1.0f);
+	
+	// Add the ambient lighting to the object.
+    float4 Finished = D_Result + Ambient + (P_Result * P_Attenuation);
 
-	//return float4(InputPixel.Texture, 1, 0);
-    return FinalColor;
+	// Return the fully lighted object.
+	return Finished;
 }
-
-/*
-float4 PS( PS_INPUT input) : SV_Target
-{
-    float4 finalColor = 0;
-
-    //do NdotL lighting for 2 lights
-    for(int i=0; i<2; i++)
-    {
-        finalColor += saturate( dot( (float3)vLightDir[i],input.Norm) * vLightColor[i] );
-    }
-    finalColor *= txDiffuse.Sample(samLinear, input.Tex);
-    finalColor.a = 1;
-    return finalColor;
-}
-*/

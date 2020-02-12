@@ -17,9 +17,15 @@ public:
 		XMMATRIX WorldMatrix;
 		XMMATRIX ViewMatrix;
 		XMMATRIX ProjectionMatrix;
+		XMFLOAT4 AmbientLightColor;
 		XMFLOAT4 DirectionalLightDirections[1];
+		XMFLOAT4 PointLightPositions[1];
 		XMFLOAT4 DirectionalLightColors[1];
-		float DirectionalLightIntensities[1];
+		XMFLOAT4 PointLightColors[1];
+		float DirectionalLightIntensities;
+		float AmbientLightIntensity;
+		float PointLightIntensities;
+		float PadA;
 	};
 
 	ID3D11Device*				Device = nullptr;
@@ -43,7 +49,7 @@ public:
 	ID3D11Buffer* MeshVertexBuffer = nullptr;
 	ID3D11Buffer* MeshIndexBuffer = nullptr;
 
-	ID3D11Texture2D* ZBuffer = nullptr;								// Z-Buffer for depth sorting.
+	ID3D11Texture2D* ZBuffer = nullptr;						// Z-Buffer for depth sorting.
 	ID3D11DepthStencilView* ZBufferView = nullptr;
 
 	Environment SpacialEnvironment;							// Contains the World, View, and Projection matrices.
@@ -51,11 +57,16 @@ public:
 	std::vector<Camera*> WorldCameras;
 	std::vector<Object*> WorldObjects;
 	std::vector<DirectionalLight*> WorldDirectionalLights;
+	std::vector<PointLight*> WorldPointLights;
 
 	// Graphics control options. -------------------------------------------------------------------->
 	float RenderBackgroundColor[4] = { 0.45f, 0.45f, 0.45f, 0.45f };	// The color of the default background to set the renderer to when clearing DepthStencil and Viewport.
 	int FrameSyncControl = 0;											// Should the refresh rate be locked to the maximum on the device? "0" means no, "1" means yes. V-SYNC.
 	float FieldOfViewDeg = 90.0f;										// Field of view in degrees.
+
+	// World control options. ----------------------------------------------------------------------->
+	XMFLOAT4 AmbientLightCol = { 1, 1, 0, 1 };							// Color of the ambient lighting in the world.
+	float AmbientLightIntense = 0.25f;									// Intensity of the ambient light on the environment.
 
 	// Setup render target and present.
 	void PresentFromRenderTarget(Camera* Cam, Object* Obj, float DeltaTime = 1.0f);
@@ -68,7 +79,8 @@ public:
 	Camera* CreateCamera(const char* DebugName, Object* AttachTo = nullptr);
 
 	// Create a new directional light.
-	DirectionalLight* CreateDirectionalLight(const char* DebugName, XMFLOAT4 direction, XMFLOAT4 color = { 1, 1, 1, 1 }, float intensity = 1.0f);
+	DirectionalLight* CreateDirectionalLight(const char* DebugName, XMFLOAT4 direction = { 1, 1, 1, 1 }, XMFLOAT4 color = { 1, 1, 1, 1 }, float intensity = 1.0f);
+	PointLight* CreatePointLight(const char* DebugName, XMFLOAT4 color = { 1, 1, 1, 1 }, float intensity = 1.0f);
 
 	// Called every frame.
 	void Update(float DeltaTime);
@@ -79,6 +91,6 @@ public:
 
 	// Memory managent.
 	void ReleaseInterfaces();													// Release the held references in memory through DirectX.
-	void ReleasePointerObjects(bool bCameras = true, bool bObjects = true);		// Delete all pointers before close.
+	void ReleasePointerObjects(bool bCameras = true, bool bObjects = true, bool bLights = true);		// Delete all pointers before close.
 };
 

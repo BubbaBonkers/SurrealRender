@@ -144,8 +144,11 @@ namespace NRB
 		// Below is extra functionality in case it is needed in the future.
 		bool bIsVisible = true;
 
+	private:
+		float TickTime = 0.0f;
 
 
+	public:
 		// ---------- Get information about this object. ----------------------------------------------------------------------------------------->
 
 		// Move this object in a 3D world. Returns the object's new World Matrix after movement.
@@ -153,7 +156,7 @@ namespace NRB
 		{
 			// Translate the object in world space.
 			XMMATRIX Base = XMLoadFloat4x4(&WorldMatrix);
-			XMMATRIX Translated = XMMatrixTranslation(XMConvertToRadians(x), XMConvertToRadians(y), XMConvertToRadians(z));
+			XMMATRIX Translated = XMMatrixTranslation((XMConvertToRadians(x) * TickTime), (XMConvertToRadians(y) * TickTime), (XMConvertToRadians(z) * TickTime));
 			Translated = XMMatrixMultiply(Base, Translated);
 
 			// Store the new information.
@@ -167,7 +170,7 @@ namespace NRB
 		{
 			// Rotate the object in world space.
 			XMMATRIX Base = XMLoadFloat4x4(&WorldMatrix);
-			XMMATRIX Rotated = XMMatrixRotationRollPitchYaw(Pitch, Yaw, Roll);
+			XMMATRIX Rotated = XMMatrixRotationRollPitchYaw((Pitch * TickTime), (Yaw * TickTime), (Roll * TickTime));
 			Rotated = XMMatrixMultiply(Base, Rotated);
 
 			// Store the new information.
@@ -183,7 +186,7 @@ namespace NRB
 		// Called every frame.
 		void Update(float DeltaTime)
 		{
-			
+			TickTime = DeltaTime;
 		}
 
 
@@ -320,14 +323,21 @@ namespace NRB
 		Object* AttachTarget = nullptr;										// The object this camera is attached to (following). Leave as "nullptr" to disable attachment.
 
 		// Camera physical attributes.
-		float CameraMovementSpeed = 15.0f;
+		float CameraMovementSpeed = 15.0f;									// Speed of camera movement in 3D space.
+		float CameraRotationSpeed = 6.0f;									// Rate at which the camera rotates when you look around.
+
+	private:
+		float TickTime = 0.0f;
+
+		float NearClip = 0.1f;
+		float FarClip = 1000.0f;
 
 
-
+	public:
 		// ---------- Get information about this object. ----------------------------------------------------------------------------------------->
 
 		// Move this object in a 3D world. Returns the object's new World Matrix after movement. Set BasedInWorld to true if you want the movement to occur relative to the world x, y, and z rather than relative to this camera's current location.
-		XMFLOAT4X4 AddMovementInput(float x, float y, float z, float bBaseOnWorld = false)
+		XMFLOAT4X4 AddMovementInput(float x, float y, float z, bool bBaseOnWorld = false)
 		{
 			XMMATRIX Base;
 			XMMATRIX Translated;
@@ -353,30 +363,44 @@ namespace NRB
 			return SpacialEnvironment.WorldMatrix;
 		}
 
-		// Rotate this object in a 3D world. Return the object's new World Matrix after rotation. Set bBaseOnWorld to false if you want the rotation to be based on the current camera rotation rather than the world matrix.
-		XMFLOAT4X4 AddRotationInput(float Pitch, float Yaw, float Roll, bool bBaseOnWorld = true)
+		// Rotate this object in a 3D world. Return the object's new World Matrix after rotation. Set bBaseOnWorld to false if you want the rotation to be based on the current camera rotation rather than the world matrix. Set ignore DeltaTime to true to force the exact rotation and ignore the tick update.
+		XMFLOAT4X4 AddRotationInput(float Pitch, float Yaw, float Roll, bool bBaseOnWorld = true, bool bIgnoreDeltaTime = false)
 		{
 			XMMATRIX Base;
 			XMMATRIX Rotated;
 
+			float Multiplier = 1.0f;
+			if (bIgnoreDeltaTime)
+			{
+				Multiplier = 1.0f;
+			}
+			else
+			{
+				Multiplier = TickTime;
+			}
+
 			if (bBaseOnWorld)
 			{
-				// Translate the object in world space.
-				XMMATRIX Temp = XMMatrixIdentity();
-				Rotated = XMMatrixMultiply(Temp, XMMatrixRotationRollPitchYaw(Pitch, Yaw, Roll));
-				Base = XMLoadFloat4x4(&SpacialEnvironment.WorldMatrix);
-				Rotated = XMMatrixMultiply(Base, Rotated);
+				// Rotate the object in world space.
+				XMFLOAT3 TempPos = *(XMFLOAT3*)&SpacialEnvironment.WorldMatrix._41;
+				XMMATRIX Temp = (XMMatrixMultiply(XMLoadFloat4x4(&SpacialEnvironment.WorldMatrix), XMMatrixRotationY(-Yaw * Multiplier)));
+				XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, Temp);
+
+				*(XMFLOAT3*)&SpacialEnvironment.WorldMatrix._41 = TempPos;
+
+				Temp = (XMMatrixMultiply(XMMatrixRotationX(-Pitch * Multiplier), XMLoadFloat4x4(&SpacialEnvironment.WorldMatrix)));
+				XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, Temp);
 			}
 			else
 			{
 				// Rotate the object in world space.
 				Base = XMLoadFloat4x4(&SpacialEnvironment.WorldMatrix);
-				Rotated = XMMatrixRotationRollPitchYaw(Pitch, Yaw, Roll);
+				Rotated = XMMatrixRotationRollPitchYaw((Pitch * Multiplier), (Yaw * Multiplier), (Roll * Multiplier));
 				Rotated = XMMatrixMultiply(Base, Rotated);
 			}
 
 			// Store the new information.
-			XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, Rotated);
+			//XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, Rotated);
 
 			return SpacialEnvironment.WorldMatrix;
 		}
@@ -392,6 +416,8 @@ namespace NRB
 		// Called every frame.
 		void Update(float DeltaTime)
 		{
+			TickTime = DeltaTime;
+
 			//std::cout << DeltaTime << '\n';
 			//std::cout << (1.0f / DeltaTime) << '\n' << '\n';
 
@@ -404,46 +430,43 @@ namespace NRB
 
 			if (GetKeyState(VK_RBUTTON) & 0x80)
 			{
-				// Get the starting position of the mouse.
+				// Get the starting position of the mouse for this current frame.
 				POINT TempMousePosition;
 				GetCursorPos(&TempMousePosition);
 
-				// Rotate the camera.
-				if ((MousePosition.x != TempMousePosition.x) && (MousePosition.y != TempMousePosition.y))
+				// Rotate the camera by the difference in mouse position between the last and current frame.
+				if ((MousePosition.x != TempMousePosition.x) || (MousePosition.y != TempMousePosition.y))
 				{
 					POINT NewPosition = { MousePosition.x - TempMousePosition.x, MousePosition.y - TempMousePosition.y };
-					AddRotationInput((NewPosition.y * 0.005f), (NewPosition.x * 0.005f), 0, true);
-					std::cout << "X: " << NewPosition.x << "Y: " << NewPosition.y << '\n' << '\n';
-
-					GetCursorPos(&MousePosition);
+					AddRotationInput((NewPosition.y * (CameraRotationSpeed)), (NewPosition.x * (CameraRotationSpeed)), 0, true);
 				}
 
 				// Move forward, backward, and side to side.
 				if (GetKeyState('W') & 0x8000)
 				{
-					AddMovementInput(0, 0, -(CameraMovementSpeed * DeltaTime));
+					AddMovementInput(0, 0, (CameraMovementSpeed * DeltaTime), true);
 				}
 				if (GetKeyState('S') & 0x8000)
 				{
-					AddMovementInput(0, 0, (CameraMovementSpeed * DeltaTime));
+					AddMovementInput(0, 0, -(CameraMovementSpeed * DeltaTime), true);
 				}
 				if (GetKeyState('A') & 0x8000)
 				{
-					AddMovementInput((CameraMovementSpeed * DeltaTime), 0, 0);
+					AddMovementInput(-(CameraMovementSpeed * DeltaTime), 0, 0, true);
 				}
 				if (GetKeyState('D') & 0x8000)
 				{
-					AddMovementInput(-(CameraMovementSpeed * DeltaTime), 0, 0);
+					AddMovementInput((CameraMovementSpeed * DeltaTime), 0, 0, true);
 				}
 
 				// Move up or down.
 				if (GetKeyState('Q') & 0x8000)
 				{
-					AddMovementInput(0, -(CameraMovementSpeed * DeltaTime), 0, true);
+					AddMovementInput(0, (CameraMovementSpeed * DeltaTime), 0, true);
 				}
 				if (GetKeyState('E') & 0x8000)
 				{
-					AddMovementInput(0, (CameraMovementSpeed * DeltaTime), 0, true);
+					AddMovementInput(0, -(CameraMovementSpeed * DeltaTime), 0, true);
 				}
 
 				// Increase and decrease camera movement speed.
@@ -465,18 +488,54 @@ namespace NRB
 				// Field of view controls.
 				if (GetKeyState('N') & 0x8000)
 				{
-					RefreshCameraFOV((FieldOfViewDeg + (12.0f * DeltaTime)));
+					if (FieldOfViewDeg < 100.0f)
+					{
+						RefreshCameraFOV((FieldOfViewDeg + (12.0f * DeltaTime)));
+					}
 				}
 				if (GetKeyState('M') & 0x8000)
 				{
-					RefreshCameraFOV((FieldOfViewDeg - (12.0f * DeltaTime)));
+					if (FieldOfViewDeg > 40.0f)
+					{
+						RefreshCameraFOV((FieldOfViewDeg - (12.0f * DeltaTime)));
+					}
+				}
+
+				// Camera clipping near plane.
+				if (GetKeyState('P') & 0x8000)
+				{
+					if (NearClip < (FarClip - 10))
+					{
+						ChangeCameraClipping((NearClip + (5.0f * DeltaTime)), FarClip);
+					}
+				}
+				if (GetKeyState('O') & 0x8000)
+				{
+					if (NearClip > 0.1f)
+					{
+						ChangeCameraClipping((NearClip - (5.0f * DeltaTime)), FarClip);
+					}
+				}
+
+				// Camera clipping far plane.
+				if (GetKeyState('I') & 0x8000)
+				{
+					if (FarClip < 5000.0f)
+					{
+						ChangeCameraClipping(NearClip, (FarClip + (5.0f * DeltaTime)));
+					}
+				}
+				if (GetKeyState('U') & 0x8000)
+				{
+					if (FarClip > (NearClip + 10))
+					{
+						ChangeCameraClipping(NearClip, (FarClip - (5.0f * DeltaTime)));
+					}
 				}
 			}
-			else
-			{
-				// Get the starting position.
-				GetCursorPos(&MousePosition);
-			}
+
+			// Get the starting position for the next frame.
+			GetCursorPos(&MousePosition);
 		}
 
 
@@ -490,7 +549,7 @@ namespace NRB
 			AttachTarget = AttachTo;
 			XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, XMMatrixIdentity());
 			XMStoreFloat4x4(&SpacialEnvironment.ViewMatrix, XMMatrixIdentity());
-			XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, 0.1f, 1000.0f);
+			XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, NearClip, FarClip);
 			XMStoreFloat4x4(&SpacialEnvironment.ProjectionMatrix, Temp);
 		}
 
@@ -499,7 +558,7 @@ namespace NRB
 		{
 			FieldOfViewDeg = FOV;
 
-			XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, 0.1f, 1000.0f);
+			XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, NearClip, FarClip);
 			XMStoreFloat4x4(&SpacialEnvironment.ProjectionMatrix, Temp);
 		}
 
@@ -508,7 +567,16 @@ namespace NRB
 		{
 			AspectRatio = InRatio;
 
-			XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, 0.1f, 1000.0f);
+			XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, NearClip, FarClip);
+			XMStoreFloat4x4(&SpacialEnvironment.ProjectionMatrix, Temp);
+		}
+
+		// Sets a new Aspect Ratio and changes the projection matrix.
+		void ChangeCameraClipping(float MinZ, float MaxZ)
+		{
+			NearClip = MinZ;
+			FarClip = MaxZ;
+			XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, NearClip, FarClip);
 			XMStoreFloat4x4(&SpacialEnvironment.ProjectionMatrix, Temp);
 		}
 

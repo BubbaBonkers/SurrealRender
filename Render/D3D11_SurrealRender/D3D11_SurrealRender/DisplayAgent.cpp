@@ -8,8 +8,6 @@
 // Called every frame.
 void DisplayAgent::Update(float DeltaTime)
 {
-    std::cout << '\n' << "Display: " << DeltaTime << '\n';
-
     // Call update on all objects and cameras to check for changes in state.
     for (unsigned int i = 0; i < WorldCameras.size(); ++i)
     {
@@ -19,13 +17,17 @@ void DisplayAgent::Update(float DeltaTime)
     {
         WorldObjects[i]->Update(DeltaTime);
     }
+    for (unsigned int i = 0; i < WorldObjects.size(); ++i)
+    {
+        WorldPointLights[i]->Update(DeltaTime);
+    }
 }
 
 // Called before the window closes.
 void DisplayAgent::EndPlay()
 {
     ReleaseInterfaces();
-    ReleasePointerObjects(true, true);
+    ReleasePointerObjects(true, true, true);
 }
 
 // Create a new camera, leave AttachTo as "nullptr" to not attach to an object.
@@ -71,6 +73,16 @@ DirectionalLight* DisplayAgent::CreateDirectionalLight(const char* DebugName, XM
     return NewDirLight;
 }
 
+// Create a new point light.
+PointLight* DisplayAgent::CreatePointLight(const char* DebugName, XMFLOAT4 color, float intensity)
+{
+    PointLight* NewPointLight = new PointLight();
+    NewPointLight->CreateLight(DebugName, color, intensity);
+    WorldPointLights.push_back(NewPointLight);
+
+    return NewPointLight;
+}
+
 void DisplayAgent::ChangeAspectRatio(float InRatio)
 {
     for (unsigned int i = 0; i < WorldCameras.size(); ++i)
@@ -99,41 +111,41 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
     Context->IASetIndexBuffer(MeshIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
     Context->IASetInputLayout(InputLayout);
 
-    // Load the Texture
-    HRESULT hr;// = CreateDDSTextureFromFile(Device, L"Assets/Crate.dds", nullptr, &ShaderResourceView);
-
     // Create the sample state
     D3D11_SAMPLER_DESC sampDesc = {};
-    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    sampDesc.Filter = D3D11_FILTER_ANISOTROPIC;
     sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
     sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
     sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
     sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
     sampDesc.MinLOD = 0;
     sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-    hr = Device->CreateSamplerState(&sampDesc, &LinearSamplerState);
+
+    // Load the Texture
+    HRESULT hr = Device->CreateSamplerState(&sampDesc, &LinearSamplerState);
 
     // Math Stuffs.
 
     // Translate the object in world space.
-    Obj->AddRotationInput(0, 10.0f, 0);
+    Obj->AddRotationInput(0, 1.0f, 0);
+    WorldPointLights[0]->AddRotationInput(-5.0f, -5.0f, -5.0f, false);
+    WorldPointLights[0]->AddMovementInput(-5.0f, 0.0f, 0.0f, false);
 
     // GPU Mapping.
 
-    // Set the cube to use the world matrix with View and Projection taken into account.
-    XMMATRIX ObjWorld = XMLoadFloat4x4(&Obj->WorldMatrix);
-    XMMATRIX CamView = XMLoadFloat4x4(&Cam->SpacialEnvironment.ViewMatrix);
-    XMMATRIX CamProjection = XMLoadFloat4x4(&Cam->SpacialEnvironment.ProjectionMatrix);
-    XMStoreFloat4x4(&Obj->WorldMatrix, XMMatrixMultiply(XMMatrixMultiply(ObjWorld, CamView), CamProjection));
-
     // Create the ConstBuffer to send to the graphics card ConstantBuffer.
     ConstBuffer cb1;
-    cb1.WorldMatrix = XMLoadFloat4x4(&Cam->SpacialEnvironment.WorldMatrix);//XMMatrixTranspose(XMLoadFloat4x4(&Cam->SpacialEnvironment.WorldMatrix));
-    cb1.ViewMatrix = XMLoadFloat4x4(&Cam->SpacialEnvironment.ViewMatrix);//XMMatrixTranspose(XMLoadFloat4x4(&Cam->SpacialEnvironment.ViewMatrix));
-    cb1.ProjectionMatrix = XMLoadFloat4x4(&Cam->SpacialEnvironment.ProjectionMatrix);//XMMatrixTranspose(XMLoadFloat4x4(&Cam->SpacialEnvironment.ProjectionMatrix));
+    cb1.WorldMatrix = XMLoadFloat4x4(&Obj->WorldMatrix);
+    cb1.ViewMatrix = XMMatrixInverse(0, XMLoadFloat4x4(&Cam->SpacialEnvironment.WorldMatrix));
+    cb1.ProjectionMatrix = XMLoadFloat4x4(&Cam->SpacialEnvironment.ProjectionMatrix);
     cb1.DirectionalLightDirections[0] = WorldDirectionalLights[0]->Direction;
     cb1.DirectionalLightColors[0] = WorldDirectionalLights[0]->Color;
-    cb1.DirectionalLightIntensities[0] = WorldDirectionalLights[0]->Intensity;
+    cb1.DirectionalLightIntensities = WorldDirectionalLights[0]->Intensity;
+    cb1.AmbientLightColor = AmbientLightCol;
+    cb1.AmbientLightIntensity = AmbientLightIntense;
+    cb1.PointLightColors[0] = WorldPointLights[0]->Color;
+    cb1.PointLightIntensities = WorldPointLights[0]->Intensity;
+    cb1.PointLightPositions[0] = XMFLOAT4(WorldPointLights[0]->WorldMatrix._41, WorldPointLights[0]->WorldMatrix._42, WorldPointLights[0]->WorldMatrix._43, WorldPointLights[0]->WorldMatrix._44);
 
     // Send data to the graphics card.
     D3D11_MAPPED_SUBRESOURCE GPUBufferCDS;
@@ -143,7 +155,6 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
 
     // Apply matrix math in vertex shader and connect the constant buffer to the pipeline.
     ID3D11Buffer* Constants[] = { ConstantBuffer };
-
     // Shader Stuffs.
 
     // Vertex and Pixel Shader stages.
@@ -183,7 +194,7 @@ void DisplayAgent::ReleaseInterfaces()
 }
 
 // Delete all pointers before close.
-void DisplayAgent::ReleasePointerObjects(bool bCameras, bool bObjects)
+void DisplayAgent::ReleasePointerObjects(bool bCameras, bool bObjects, bool bLights)
 {
     if (bCameras)
     {
@@ -200,6 +211,24 @@ void DisplayAgent::ReleasePointerObjects(bool bCameras, bool bObjects)
         {
             WorldObjects[i] = nullptr;
             delete WorldObjects[i];
+        }
+    }
+
+    if (bLights)
+    {
+        for (unsigned int i = 0; i < WorldDirectionalLights.size(); ++i)
+        {
+            WorldDirectionalLights[i] = nullptr;
+            delete WorldDirectionalLights[i];
+        }
+    }
+
+    if (bLights)
+    {
+        for (unsigned int i = 0; i < WorldPointLights.size(); ++i)
+        {
+            WorldPointLights[i] = nullptr;
+            delete WorldPointLights[i];
         }
     }
 }

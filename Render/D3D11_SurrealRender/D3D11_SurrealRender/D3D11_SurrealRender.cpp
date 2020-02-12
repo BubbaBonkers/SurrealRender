@@ -58,14 +58,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     // TODO: Place code here.
-
     // Initialize global strings
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_D3D11SURREALRENDER, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
 
     // Create the display agent.
-    MainDisplay = new DisplayAgent();
+    MainDisplay = new DisplayAgent();    
 
     // Perform application initialization:
     // Attempt to initialize the hInstance of the window, if failed, return a false value for the app.
@@ -85,10 +84,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     Clock.Start();
 
     // Main message loop:
-    while (true)    // PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+    while (true)
     {
         // Update timer for clock.
-        float DeltaTime = Clock.GetElapsedMiliseconds() * 0.001f;
+        float DeltaTime = (float)(Clock.GetElapsedMiliseconds() * 0.001f);
         Clock.Restart();
 
         MainDisplay->Update(DeltaTime);
@@ -206,11 +205,14 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    // Create the camera to view the world through.
    Camera* MainCamera = MainDisplay->CreateCamera("Eyes");
-   MainCamera->AddMovementInput(0, -3.0f, 5.0f);
-   MainCamera->AddRotationInput(-0.5f, 0, 0);
+   MainCamera->AddMovementInput(0, 3.0f, -5.0f);
+   MainCamera->AddRotationInput(-0.45f, 0.0f, 0.0f, true, true);
 
    // Create a light.
-   MainDisplay->CreateDirectionalLight("Sunlight", { 0, 0, 0, 0 }, { 1, 1, 1, 1 }, 0.2f);
+   MainDisplay->CreateDirectionalLight("Sunlight", { 1, 1, 1, 1 }, { 1, 1, 1, 1 }, 1.0f);
+   MainDisplay->CreatePointLight("PointLightTest", { 0, 1, 1, 1 }, 1.0f);
+   //MainDisplay->WorldPointLights[0]->WorldMatrix = MainDisplay->WorldCameras[0]->SpacialEnvironment.WorldMatrix;
+   XMStoreFloat4x4(&MainDisplay->WorldPointLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(10.0f, 8.0f, 0.0f), XMLoadFloat4x4(&MainDisplay->WorldPointLights[0]->WorldMatrix)));
 
    // Set aspect ratio for world and cameras.
    MainDisplay->ChangeAspectRatio((float)Swap.BufferDesc.Width / (float)Swap.BufferDesc.Height);
@@ -252,8 +254,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    MainDisplay->Device->CreateDepthStencilView(MainDisplay->ZBuffer, nullptr, &MainDisplay->ZBufferView);
 
    // Setup the Viewport.
-   MainDisplay->Viewport.Width = Swap.BufferDesc.Width;
-   MainDisplay->Viewport.Height = Swap.BufferDesc.Height;
+   MainDisplay->Viewport.Width = (float)Swap.BufferDesc.Width;
+   MainDisplay->Viewport.Height = (float)Swap.BufferDesc.Height;
    MainDisplay->Viewport.TopLeftX = MainDisplay->Viewport.TopLeftY = 0;
    MainDisplay->Viewport.MinDepth = 0;
    MainDisplay->Viewport.MaxDepth = 1;
