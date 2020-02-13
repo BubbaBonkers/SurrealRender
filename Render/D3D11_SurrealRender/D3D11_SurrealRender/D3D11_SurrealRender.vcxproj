@@ -169,6 +169,7 @@
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="DisplayAgent.cpp" />
     <ClCompile Include="NotLights.cpp" />
+    <ClCompile Include="NotReallyBasics.cpp" />
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -176,6 +177,8 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Crate.dds" />
+    <Image Include="Assets\FancyBoxDDS.dds" />
+    <Image Include="Assets\Willow_Trunk_D.dds" />
     <Image Include="D3D11_SurrealRender.ico" />
     <Image Include="small.ico" />
   </ItemGroup>
@@ -198,6 +201,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\cube.mesh" />
+    <None Include="Assets\FancyBox.mesh" />
+    <None Include="Assets\WillowTreeFBX.mesh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

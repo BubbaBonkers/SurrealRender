@@ -21,8 +21,6 @@ public:
 class DirectionalLight : public NotLights
 {
 public:
-	float Intensity = 1.0f;								// Intensity of the light emitted from this Not Light.
-	XMFLOAT4 Color = { 1.0f, 1.0f, 1.0f, 1.0f };		// Color of light emitted from this Not Light.
 	XMFLOAT4 Direction;									// Direction in 3D space.
 
 	// Initialize this light for use in the game world. Takes in a direction, color, and intensity.

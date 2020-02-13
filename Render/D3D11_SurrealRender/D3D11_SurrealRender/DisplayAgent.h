@@ -34,20 +34,16 @@ public:
 	ID3D11RenderTargetView*		RenderTargetView = nullptr;
 	D3D11_VIEWPORT				Viewport;
 
-	ID3D11Buffer*				VertexBuffer = nullptr;
 	ID3D11InputLayout*			InputLayout = nullptr;
 	ID3D11PixelShader*			PixelShader = nullptr;		// HLSL
 
 	// Texture variables.
-	ID3D11ShaderResourceView*	ShaderResourceView = nullptr;
 	ID3D11SamplerState*			LinearSamplerState = nullptr;
 	ID3D11Texture2D*			DiffuseTexture = nullptr;
 
 	ID3D11VertexShader* MeshVertexShader = nullptr;			// HLSL
 
 	ID3D11Buffer* ConstantBuffer = nullptr;					// Stores shaders to send to the video card.
-	ID3D11Buffer* MeshVertexBuffer = nullptr;
-	ID3D11Buffer* MeshIndexBuffer = nullptr;
 
 	ID3D11Texture2D* ZBuffer = nullptr;						// Z-Buffer for depth sorting.
 	ID3D11DepthStencilView* ZBufferView = nullptr;
@@ -72,8 +68,8 @@ public:
 	void PresentFromRenderTarget(Camera* Cam, Object* Obj, float DeltaTime = 1.0f);
 
 	// Create a new object.
-	Object* CreateObject(const char* DebugName, const char* FileName, bool bHide = false);
-	Object* CreateObject(const char* DebugName, std::vector<Vertex> VertexData, std::vector<int> IndexData, bool bHide = false);
+	Object* CreateObject(const char* DebugName, const char* FileName, const char* TextureDDS, bool bHide = false);
+	Object* CreateObject(const char* DebugName, const char* TextureDDS, std::vector<Vertex> VertexData, std::vector<int> IndexData, bool bHide = false);
 
 	// Create a new camera, leave AttachTo as "nullptr" to not attach to an object.
 	Camera* CreateCamera(const char* DebugName, Object* AttachTo = nullptr);

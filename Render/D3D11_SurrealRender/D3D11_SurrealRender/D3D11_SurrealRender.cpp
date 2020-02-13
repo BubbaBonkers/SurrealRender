@@ -14,7 +14,6 @@
 // Custom library includes.
 #include "DisplayAgent.h"       // Holds *Device, *SwapChain, *Context, *RenderTargetView, and Viewport.
 #include "NotReallyBasics.h"    // Some basic functions and structs for math and color type things.
-#include "DDSTextureLoader.h"
 #include "Timer.h"				// Timer for things that need it.
 #include "NotLights.h"          // Lighting objects to emit light, duh!
 
@@ -200,20 +199,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    Swap.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
    Swap.SampleDesc.Count = 1;
 
-   // Create the cube.mesh for testing the object creation.
-   Object* CubeTest = MainDisplay->CreateObject("TestingCube", "Assets/cube.mesh");
-
-   // Create the camera to view the world through.
-   Camera* MainCamera = MainDisplay->CreateCamera("Eyes");
-   MainCamera->AddMovementInput(0, 3.0f, -5.0f);
-   MainCamera->AddRotationInput(-0.45f, 0.0f, 0.0f, true, true);
-
-   // Create a light.
-   MainDisplay->CreateDirectionalLight("Sunlight", { 1, 1, 1, 1 }, { 1, 1, 1, 1 }, 1.0f);
-   MainDisplay->CreatePointLight("PointLightTest", { 0, 1, 1, 1 }, 1.0f);
-   //MainDisplay->WorldPointLights[0]->WorldMatrix = MainDisplay->WorldCameras[0]->SpacialEnvironment.WorldMatrix;
-   XMStoreFloat4x4(&MainDisplay->WorldPointLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(10.0f, 8.0f, 0.0f), XMLoadFloat4x4(&MainDisplay->WorldPointLights[0]->WorldMatrix)));
-
    // Set aspect ratio for world and cameras.
    MainDisplay->ChangeAspectRatio((float)Swap.BufferDesc.Width / (float)Swap.BufferDesc.Height);
 
@@ -260,30 +245,18 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    MainDisplay->Viewport.MinDepth = 0;
    MainDisplay->Viewport.MaxDepth = 1;
 
-   // Load the Cube object data into the video card.
-   D3D11_BUFFER_DESC BufferDescription;
-   D3D11_SUBRESOURCE_DATA SubData;
-   ZeroMemory(&BufferDescription, sizeof(BufferDescription));
-   ZeroMemory(&SubData, sizeof(SubData));
+   // Create the sample state
+   D3D11_SAMPLER_DESC sampDesc = {};
+   sampDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+   sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+   sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+   sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+   sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+   sampDesc.MinLOD = 0;
+   sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
-   BufferDescription.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-   BufferDescription.ByteWidth = sizeof(Vertex) * CubeTest->Vertices.size();
-   BufferDescription.CPUAccessFlags = 0;
-   BufferDescription.MiscFlags = 0;
-   BufferDescription.StructureByteStride = 0;
-   BufferDescription.Usage = D3D11_USAGE_IMMUTABLE;
-
-   SubData.pSysMem = CubeTest->Vertices.data();
-
-   // Vertex Buffer.
-   hr = MainDisplay->Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay->MeshVertexBuffer);
-
-   // Index Buffer.
-   BufferDescription.BindFlags = D3D11_BIND_INDEX_BUFFER;
-   BufferDescription.ByteWidth = sizeof(Vertex) * CubeTest->Indices.size();
-   SubData.pSysMem = CubeTest->Indices.data();
-
-   hr = MainDisplay->Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay->MeshIndexBuffer);
+   // Load the Texture
+   hr = MainDisplay->Device->CreateSamplerState(&sampDesc, &MainDisplay->LinearSamplerState);
 
    // Load the new mesh shader.
    hr = MainDisplay->Device->CreateVertexShader(GeneralMeshVertexShaders, sizeof(GeneralMeshVertexShaders), nullptr, &MainDisplay->MeshVertexShader);
@@ -299,12 +272,12 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0}
    };
 
-
    hr = MainDisplay->Device->CreateInputLayout(InputDesc, 3, GeneralMeshVertexShaders, sizeof(GeneralMeshVertexShaders), &MainDisplay->InputLayout);
 
    MainDisplay->Context->IASetInputLayout(MainDisplay->InputLayout);                         // Input assembler.
 
    // Create the constant buffer.
+   D3D11_BUFFER_DESC BufferDescription;
    ZeroMemory(&BufferDescription, sizeof(BufferDescription));
 
    BufferDescription.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
@@ -316,9 +289,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    // Create the Buffer to put the model on.
    hr = MainDisplay->Device->CreateBuffer(&BufferDescription, nullptr, &MainDisplay->ConstantBuffer);
-
-   // Load the Texture
-   CreateDDSTextureFromFile(MainDisplay->Device, L"Assets/Crate.dds", nullptr, &MainDisplay->ShaderResourceView);
 
    // Load the texture into the graphics card.
    D3D11_TEXTURE2D_DESC TextureDesc;
@@ -338,26 +308,26 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    MainDisplay->Device->CreateTexture2D(&TextureDesc, nullptr, &MainDisplay->DiffuseTexture);
 
-   // Load the complex mesh onto the video card.
-   BufferDescription.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-   BufferDescription.ByteWidth = (CubeTest->Vertices.size() * sizeof(Vertex));
-   BufferDescription.CPUAccessFlags = 0;
-   BufferDescription.MiscFlags = 0;
-   BufferDescription.StructureByteStride = 0;
-   BufferDescription.Usage = D3D11_USAGE_IMMUTABLE;
-
-   SubData.pSysMem = CubeTest->Vertices.data();
-
-   // Create the Buffer to put the model on.
-   hr = MainDisplay->Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay->MeshVertexBuffer);
-   BufferDescription.BindFlags = D3D11_BIND_INDEX_BUFFER;
-   BufferDescription.ByteWidth = (CubeTest->Indices.size() * sizeof(int));
-   SubData.pSysMem = CubeTest->Indices.data();
-
-   hr = MainDisplay->Device->CreateBuffer(&BufferDescription, &SubData, &MainDisplay->MeshIndexBuffer);
-
    // Load the new mesh shader.
-   hr = MainDisplay->Device->CreateVertexShader(GeneralMeshVertexShaders, sizeof(GeneralMeshVertexShaders), nullptr, &MainDisplay->MeshVertexShader);
+   //hr = MainDisplay->Device->CreateVertexShader(GeneralMeshVertexShaders, sizeof(GeneralMeshVertexShaders), nullptr, &MainDisplay->MeshVertexShader);
+
+   // Create the cube.mesh for testing the object creation.
+   Object* CubeTest = MainDisplay->CreateObject("TestingCube", "Assets/cube.mesh", "Assets/Crate.dds");
+   Object* MultipleObjectTest = MainDisplay->CreateObject("SecondCube", "Assets/FancyBox.mesh", "Assets/FancyBoxDDS.dds");
+   MultipleObjectTest->AddMovementInput(300.0f, -50.0f, 55.0f, true);
+   MultipleObjectTest->AddRotationInput(-5.0f, 3.0f, 0.0f, true);
+   Object* Willow = MainDisplay->CreateObject("WillowTreeTest", "Assets/WillowTreeFBX.mesh", "Assets/Willow_Trunk_D.dds");
+   Willow->AddMovementInput(-250.0f, 150.0f, -55.0f, true);
+
+   // Create the camera to view the world through.
+   Camera* MainCamera = MainDisplay->CreateCamera("Eyes");
+   MainCamera->AddMovementInput(0, 3.0f, -5.0f);
+   MainCamera->AddRotationInput(-0.45f, 0.0f, 0.0f, true, true);
+
+   // Create a light.
+   MainDisplay->CreateDirectionalLight("Sunlight", { 1, 1, 1, 1 }, { 1, 1, 1, 1 }, 1.0f);
+   MainDisplay->CreatePointLight("PointLightTest", { 0, 1, 1, 1 }, 1.0f);
+   XMStoreFloat4x4(&MainDisplay->WorldPointLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(10.0f, 8.0f, 0.0f), XMLoadFloat4x4(&MainDisplay->WorldPointLights[0]->WorldMatrix)));
 
    return TRUE;
 }

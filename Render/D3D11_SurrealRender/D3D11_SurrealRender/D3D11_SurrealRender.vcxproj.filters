@@ -25,6 +25,9 @@
     <Filter Include="Lights">
       <UniqueIdentifier>{1174f3cc-ab86-4084-91f2-ce4c932c8a6f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="BasicClasses">
+      <UniqueIdentifier>{1f8c04a0-5750-45d1-abf8-5ca006777ddd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -42,9 +45,6 @@
     <ClInclude Include="DisplayAgent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="NotReallyBasics.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DDSTextureLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -53,6 +53,9 @@
     </ClInclude>
     <ClInclude Include="NotLights.h">
       <Filter>Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="NotReallyBasics.h">
+      <Filter>BasicClasses</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -71,6 +74,9 @@
     <ClCompile Include="NotLights.cpp">
       <Filter>Lights</Filter>
     </ClCompile>
+    <ClCompile Include="NotReallyBasics.cpp">
+      <Filter>BasicClasses</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="D3D11_SurrealRender.rc">
@@ -87,6 +93,12 @@
     <Image Include="Assets\Crate.dds">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="Assets\FancyBoxDDS.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Willow_Trunk_D.dds">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="GeneralPixelShaders.hlsl">
@@ -98,6 +110,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\cube.mesh">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="Assets\FancyBox.mesh">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="Assets\WillowTreeFBX.mesh">
       <Filter>Assets</Filter>
     </None>
   </ItemGroup>
