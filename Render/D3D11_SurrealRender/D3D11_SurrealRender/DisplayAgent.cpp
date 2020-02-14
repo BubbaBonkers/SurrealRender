@@ -158,6 +158,8 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
         cb1.PointLightColors[0] = WorldPointLights[0]->Color;
         cb1.PointLightIntensities = WorldPointLights[0]->Intensity;
         cb1.PointLightPositions[0] = XMFLOAT4(WorldPointLights[0]->WorldMatrix._41, WorldPointLights[0]->WorldMatrix._42, WorldPointLights[0]->WorldMatrix._43, WorldPointLights[0]->WorldMatrix._44);
+        cb1.CameraWorldMatrix = XMLoadFloat4x4(&Cam->SpacialEnvironment.WorldMatrix);
+        cb1.BlinnPhongIntensity = 64.0f;
 
         // Send data to the graphics card.
         D3D11_MAPPED_SUBRESOURCE GPUBufferCDS;

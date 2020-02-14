@@ -327,7 +327,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    // Create a light.
    MainDisplay->CreateDirectionalLight("Sunlight", { 1, 1, 1, 1 }, { 1, 1, 1, 1 }, 1.0f);
    MainDisplay->CreatePointLight("PointLightTest", { 0, 1, 1, 1 }, 1.0f);
-   XMStoreFloat4x4(&MainDisplay->WorldPointLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(10.0f, 8.0f, 0.0f), XMLoadFloat4x4(&MainDisplay->WorldPointLights[0]->WorldMatrix)));
+   MainDisplay->CreatePointLight("StaticPointLight", { 1, 0, 1, 1 }, 1.0f);
+   XMStoreFloat4x4(&MainDisplay->WorldPointLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(13.0f, 15.0f, 0.0f), XMLoadFloat4x4(&MainDisplay->WorldPointLights[0]->WorldMatrix)));
+   XMStoreFloat4x4(&MainDisplay->WorldPointLights[1]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(10.0f, 5.0f, 3.0f), XMLoadFloat4x4(&MainDisplay->WorldPointLights[1]->WorldMatrix)));
 
    return TRUE;
 }

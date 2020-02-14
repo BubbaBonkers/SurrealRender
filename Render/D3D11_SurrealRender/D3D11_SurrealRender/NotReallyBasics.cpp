@@ -29,6 +29,10 @@ float* NRB::RGBAColor::GetColorAsArray()
 	return ColorsArray;
 }
 
+
+
+
+
 // Vector2
 
 // Set the Vector coordinates to a new X and Y using two input floats as the new values.
@@ -44,6 +48,10 @@ void NRB::Vector2::Set(float InputVector2[])
 	X = InputVector2[0];
 	Y = InputVector2[1];
 }
+
+
+
+
 
 // Vector3
 
@@ -62,6 +70,10 @@ void NRB::Vector3::Set(float InputVector3[])
 	Y = InputVector3[1];
 	Z = InputVector3[2];
 }
+
+
+
+
 
 // Vector4
 
@@ -82,6 +94,10 @@ void NRB::Vector4::Set(float InputVector4[])
 	Z = InputVector4[2];
 	W = InputVector4[3];
 }
+
+
+
+
 
 // Objects
 
@@ -291,4 +307,257 @@ void NRB::Object::EndPlay()
 	SAFE_RELEASE(VertexBuffer);			// HLSL
 	SAFE_RELEASE(IndexBuffer);
 	SAFE_RELEASE(ShaderResourceView);
+}
+
+
+
+
+
+// Cameras
+
+XMFLOAT4X4 NRB::Camera::AddMovementInput(float x, float y, float z, bool bBaseOnWorld)
+{
+	XMMATRIX Base;
+	XMMATRIX Translated;
+
+	if (bBaseOnWorld)
+	{
+		// Translate the object in world space.
+		XMMATRIX Temp = XMMatrixIdentity();
+		Translated = XMMatrixMultiply(Temp, XMMatrixTranslation(x, y, z));
+		Base = XMLoadFloat4x4(&SpacialEnvironment.WorldMatrix);
+		Translated = XMMatrixMultiply(Translated, Base);
+	}
+	else
+	{
+		Base = XMLoadFloat4x4(&SpacialEnvironment.WorldMatrix);
+		Translated = XMMatrixTranslation(x, y, z);
+		Translated = XMMatrixMultiply(Base, Translated);
+	}
+
+	// Store the new information.
+	XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, Translated);
+
+	return SpacialEnvironment.WorldMatrix;
+}
+
+// Rotate this object in a 3D world. Return the object's new World Matrix after rotation. Set bBaseOnWorld to false if you want the rotation to be based on the current camera rotation rather than the world matrix. Set ignore DeltaTime to true to force the exact rotation and ignore the tick update.
+XMFLOAT4X4 NRB::Camera::AddRotationInput(float Pitch, float Yaw, float Roll, bool bBaseOnWorld, bool bIgnoreDeltaTime)
+{
+	XMMATRIX Base;
+	XMMATRIX Rotated;
+
+	float Multiplier = 1.0f;
+	if (bIgnoreDeltaTime)
+	{
+		Multiplier = 1.0f;
+	}
+	else
+	{
+		Multiplier = TickTime;
+	}
+
+	if (bBaseOnWorld)
+	{
+		// Rotate the object in world space.
+		XMFLOAT3 TempPos = *(XMFLOAT3*)&SpacialEnvironment.WorldMatrix._41;
+		XMMATRIX Temp = (XMMatrixMultiply(XMLoadFloat4x4(&SpacialEnvironment.WorldMatrix), XMMatrixRotationY(-Yaw * Multiplier)));
+		XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, Temp);
+
+		*(XMFLOAT3*)&SpacialEnvironment.WorldMatrix._41 = TempPos;
+
+		Temp = (XMMatrixMultiply(XMMatrixRotationX(-Pitch * Multiplier), XMLoadFloat4x4(&SpacialEnvironment.WorldMatrix)));
+		XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, Temp);
+	}
+	else
+	{
+		// Rotate the object in world space.
+		Base = XMLoadFloat4x4(&SpacialEnvironment.WorldMatrix);
+		Rotated = XMMatrixRotationRollPitchYaw((Pitch * Multiplier), (Yaw * Multiplier), (Roll * Multiplier));
+		Rotated = XMMatrixMultiply(Base, Rotated);
+	}
+
+	// Store the new information.
+	//XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, Rotated);
+
+	return SpacialEnvironment.WorldMatrix;
+}
+
+void NRB::Camera::LookAtLocation(float x, float y, float z)
+{
+	// Look at a specified object in the world.
+	XMMatrixLookAtLH({ SpacialEnvironment.WorldMatrix._11, SpacialEnvironment.WorldMatrix._12, SpacialEnvironment.WorldMatrix._13 }, { x, y, z }, { 0, 1, 0 });
+}
+
+// Called every frame.
+void NRB::Camera::Update(float DeltaTime)
+{
+	TickTime = DeltaTime;
+
+	//std::cout << DeltaTime << '\n';
+	//std::cout << (1.0f / DeltaTime) << '\n' << '\n';
+
+	// Check if there is a valid AttachTarget.
+	if (AttachTarget != nullptr)
+	{
+		// Snap camera to the AttachTarget object.
+		SpacialEnvironment.WorldMatrix = AttachTarget->WorldMatrix;
+	}
+
+	if (GetKeyState(VK_RBUTTON) & 0x80)
+	{
+		// Get the starting position of the mouse for this current frame.
+		POINT TempMousePosition;
+		GetCursorPos(&TempMousePosition);
+
+		// Rotate the camera by the difference in mouse position between the last and current frame.
+		if ((MousePosition.x != TempMousePosition.x) || (MousePosition.y != TempMousePosition.y))
+		{
+			POINT NewPosition = { MousePosition.x - TempMousePosition.x, MousePosition.y - TempMousePosition.y };
+			AddRotationInput((NewPosition.y * (CameraRotationSpeed)), (NewPosition.x * (CameraRotationSpeed)), 0, true);
+		}
+
+		// Move forward, backward, and side to side.
+		if (GetKeyState('W') & 0x8000)
+		{
+			AddMovementInput(0, 0, (CameraMovementSpeed * DeltaTime), true);
+		}
+		if (GetKeyState('S') & 0x8000)
+		{
+			AddMovementInput(0, 0, -(CameraMovementSpeed * DeltaTime), true);
+		}
+		if (GetKeyState('A') & 0x8000)
+		{
+			AddMovementInput(-(CameraMovementSpeed * DeltaTime), 0, 0, true);
+		}
+		if (GetKeyState('D') & 0x8000)
+		{
+			AddMovementInput((CameraMovementSpeed * DeltaTime), 0, 0, true);
+		}
+
+		// Move up or down.
+		if (GetKeyState('Q') & 0x8000)
+		{
+			AddMovementInput(0, (CameraMovementSpeed * DeltaTime), 0, true);
+		}
+		if (GetKeyState('E') & 0x8000)
+		{
+			AddMovementInput(0, -(CameraMovementSpeed * DeltaTime), 0, true);
+		}
+
+		// Increase and decrease camera movement speed.
+		if (GetKeyState('B') & 0x8000)
+		{
+			if (CameraMovementSpeed < 40.0f)
+			{
+				CameraMovementSpeed += (17.0f * DeltaTime);
+			}
+		}
+		if (GetKeyState('V') & 0x8000)
+		{
+			if (CameraMovementSpeed > 1.0f)
+			{
+				CameraMovementSpeed -= (17.0f * DeltaTime);
+			}
+		}
+
+		// Field of view controls.
+		if (GetKeyState('N') & 0x8000)
+		{
+			if (FieldOfViewDeg < 100.0f)
+			{
+				RefreshCameraFOV((FieldOfViewDeg + (12.0f * DeltaTime)));
+			}
+		}
+		if (GetKeyState('M') & 0x8000)
+		{
+			if (FieldOfViewDeg > 40.0f)
+			{
+				RefreshCameraFOV((FieldOfViewDeg - (12.0f * DeltaTime)));
+			}
+		}
+
+		// Camera clipping near plane.
+		if (GetKeyState('P') & 0x8000)
+		{
+			if (NearClip < (FarClip - 10))
+			{
+				ChangeCameraClipping((NearClip + (5.0f * DeltaTime)), FarClip);
+			}
+		}
+		if (GetKeyState('O') & 0x8000)
+		{
+			if (NearClip > 0.1f)
+			{
+				ChangeCameraClipping((NearClip - (5.0f * DeltaTime)), FarClip);
+			}
+		}
+
+		// Camera clipping far plane.
+		if (GetKeyState('I') & 0x8000)
+		{
+			if (FarClip < 5000.0f)
+			{
+				ChangeCameraClipping(NearClip, (FarClip + (5.0f * DeltaTime)));
+			}
+		}
+		if (GetKeyState('U') & 0x8000)
+		{
+			if (FarClip > (NearClip + 10))
+			{
+				ChangeCameraClipping(NearClip, (FarClip - (5.0f * DeltaTime)));
+			}
+		}
+	}
+
+	// Get the starting position for the next frame.
+	GetCursorPos(&MousePosition);
+}
+
+// Create a camera, give it a debug name, then attach it to an object. Leave AttachTo as "nullptr" to not attach this camera to an object.
+void NRB::Camera::CreateCamera(const char* DebugName, Object* AttachTo)
+{
+	Name = DebugName;
+	AttachTarget = AttachTo;
+	XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, XMMatrixIdentity());
+	XMStoreFloat4x4(&SpacialEnvironment.ViewMatrix, XMMatrixIdentity());
+	XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, NearClip, FarClip);
+	XMStoreFloat4x4(&SpacialEnvironment.ProjectionMatrix, Temp);
+}
+
+// Sets a new FOV and changes the projection matrix.
+void NRB::Camera::RefreshCameraFOV(float FOV)
+{
+	FieldOfViewDeg = FOV;
+
+	XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, NearClip, FarClip);
+	XMStoreFloat4x4(&SpacialEnvironment.ProjectionMatrix, Temp);
+}
+
+// Sets a new Aspect Ratio and changes the projection matrix.
+void NRB::Camera::RefreshCameraAspectRatio(float InRatio)
+{
+	AspectRatio = InRatio;
+
+	XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, NearClip, FarClip);
+	XMStoreFloat4x4(&SpacialEnvironment.ProjectionMatrix, Temp);
+}
+
+// Sets a new Aspect Ratio and changes the projection matrix.
+void NRB::Camera::ChangeCameraClipping(float MinZ, float MaxZ)
+{
+	NearClip = MinZ;
+	FarClip = MaxZ;
+	XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, NearClip, FarClip);
+	XMStoreFloat4x4(&SpacialEnvironment.ProjectionMatrix, Temp);
+}
+
+// Called before the window closes.
+void NRB::Camera::EndPlay()
+{
+	if (AttachTarget != nullptr)
+	{
+		AttachTarget = nullptr;
+		delete AttachTarget;
+	}
 }

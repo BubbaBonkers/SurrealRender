@@ -17,6 +17,7 @@ public:
 		XMMATRIX WorldMatrix;
 		XMMATRIX ViewMatrix;
 		XMMATRIX ProjectionMatrix;
+		XMMATRIX CameraWorldMatrix;
 		XMFLOAT4 AmbientLightColor;
 		XMFLOAT4 DirectionalLightDirections[1];
 		XMFLOAT4 PointLightPositions[1];
@@ -25,7 +26,7 @@ public:
 		float DirectionalLightIntensities;
 		float AmbientLightIntensity;
 		float PointLightIntensities;
-		float PadA;
+		float BlinnPhongIntensity;
 	};
 
 	ID3D11Device*				Device = nullptr;
@@ -62,7 +63,7 @@ public:
 
 	// World control options. ----------------------------------------------------------------------->
 	XMFLOAT4 AmbientLightCol = { 1, 1, 0, 1 };							// Color of the ambient lighting in the world.
-	float AmbientLightIntense = 0.25f;									// Intensity of the ambient light on the environment.
+	float AmbientLightIntense = 0.15f;									// Intensity of the ambient light on the environment.
 
 	// Setup render target and present.
 	void PresentFromRenderTarget(Camera* Cam, Object* Obj, float DeltaTime = 1.0f);

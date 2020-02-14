@@ -185,261 +185,38 @@ namespace NRB
 		// ---------- Get information about this object. ----------------------------------------------------------------------------------------->
 
 		// Move this object in a 3D world. Returns the object's new World Matrix after movement. Set BasedInWorld to true if you want the movement to occur relative to the world x, y, and z rather than relative to this camera's current location.
-		XMFLOAT4X4 AddMovementInput(float x, float y, float z, bool bBaseOnWorld = false)
-		{
-			XMMATRIX Base;
-			XMMATRIX Translated;
-
-			if (bBaseOnWorld)
-			{
-				// Translate the object in world space.
-				XMMATRIX Temp = XMMatrixIdentity();
-				Translated = XMMatrixMultiply(Temp, XMMatrixTranslation(x, y, z));
-				Base = XMLoadFloat4x4(&SpacialEnvironment.WorldMatrix);
-				Translated = XMMatrixMultiply(Translated, Base);
-			}
-			else
-			{
-				Base = XMLoadFloat4x4(&SpacialEnvironment.WorldMatrix);
-				Translated = XMMatrixTranslation(x, y, z);
-				Translated = XMMatrixMultiply(Base, Translated);
-			}
-
-			// Store the new information.
-			XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, Translated);
-
-			return SpacialEnvironment.WorldMatrix;
-		}
+		XMFLOAT4X4 AddMovementInput(float x, float y, float z, bool bBaseOnWorld = false);
 
 		// Rotate this object in a 3D world. Return the object's new World Matrix after rotation. Set bBaseOnWorld to false if you want the rotation to be based on the current camera rotation rather than the world matrix. Set ignore DeltaTime to true to force the exact rotation and ignore the tick update.
-		XMFLOAT4X4 AddRotationInput(float Pitch, float Yaw, float Roll, bool bBaseOnWorld = true, bool bIgnoreDeltaTime = false)
-		{
-			XMMATRIX Base;
-			XMMATRIX Rotated;
+		XMFLOAT4X4 AddRotationInput(float Pitch, float Yaw, float Roll, bool bBaseOnWorld = true, bool bIgnoreDeltaTime = false);
 
-			float Multiplier = 1.0f;
-			if (bIgnoreDeltaTime)
-			{
-				Multiplier = 1.0f;
-			}
-			else
-			{
-				Multiplier = TickTime;
-			}
+		void LookAtLocation(float x, float y, float z);
 
-			if (bBaseOnWorld)
-			{
-				// Rotate the object in world space.
-				XMFLOAT3 TempPos = *(XMFLOAT3*)&SpacialEnvironment.WorldMatrix._41;
-				XMMATRIX Temp = (XMMatrixMultiply(XMLoadFloat4x4(&SpacialEnvironment.WorldMatrix), XMMatrixRotationY(-Yaw * Multiplier)));
-				XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, Temp);
-
-				*(XMFLOAT3*)&SpacialEnvironment.WorldMatrix._41 = TempPos;
-
-				Temp = (XMMatrixMultiply(XMMatrixRotationX(-Pitch * Multiplier), XMLoadFloat4x4(&SpacialEnvironment.WorldMatrix)));
-				XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, Temp);
-			}
-			else
-			{
-				// Rotate the object in world space.
-				Base = XMLoadFloat4x4(&SpacialEnvironment.WorldMatrix);
-				Rotated = XMMatrixRotationRollPitchYaw((Pitch * Multiplier), (Yaw * Multiplier), (Roll * Multiplier));
-				Rotated = XMMatrixMultiply(Base, Rotated);
-			}
-
-			// Store the new information.
-			//XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, Rotated);
-
-			return SpacialEnvironment.WorldMatrix;
-		}
-
-		void LookAtLocation(float x, float y, float z)
-		{
-			// Look at a specified object in the world.
-			XMMatrixLookAtLH({ SpacialEnvironment.WorldMatrix._11, SpacialEnvironment.WorldMatrix._12, SpacialEnvironment.WorldMatrix._13 }, { x, y, z }, { 0, 1, 0 });
-		}
 
 		// ---------- Functionality for this object. --------------------------------------------------------------------------------------------->
 
 		// Called every frame.
-		void Update(float DeltaTime)
-		{
-			TickTime = DeltaTime;
-
-			//std::cout << DeltaTime << '\n';
-			//std::cout << (1.0f / DeltaTime) << '\n' << '\n';
-
-			// Check if there is a valid AttachTarget.
-			if (AttachTarget != nullptr)
-			{
-				// Snap camera to the AttachTarget object.
-				SpacialEnvironment.WorldMatrix = AttachTarget->WorldMatrix;
-			}
-
-			if (GetKeyState(VK_RBUTTON) & 0x80)
-			{
-				// Get the starting position of the mouse for this current frame.
-				POINT TempMousePosition;
-				GetCursorPos(&TempMousePosition);
-
-				// Rotate the camera by the difference in mouse position between the last and current frame.
-				if ((MousePosition.x != TempMousePosition.x) || (MousePosition.y != TempMousePosition.y))
-				{
-					POINT NewPosition = { MousePosition.x - TempMousePosition.x, MousePosition.y - TempMousePosition.y };
-					AddRotationInput((NewPosition.y * (CameraRotationSpeed)), (NewPosition.x * (CameraRotationSpeed)), 0, true);
-				}
-
-				// Move forward, backward, and side to side.
-				if (GetKeyState('W') & 0x8000)
-				{
-					AddMovementInput(0, 0, (CameraMovementSpeed * DeltaTime), true);
-				}
-				if (GetKeyState('S') & 0x8000)
-				{
-					AddMovementInput(0, 0, -(CameraMovementSpeed * DeltaTime), true);
-				}
-				if (GetKeyState('A') & 0x8000)
-				{
-					AddMovementInput(-(CameraMovementSpeed * DeltaTime), 0, 0, true);
-				}
-				if (GetKeyState('D') & 0x8000)
-				{
-					AddMovementInput((CameraMovementSpeed * DeltaTime), 0, 0, true);
-				}
-
-				// Move up or down.
-				if (GetKeyState('Q') & 0x8000)
-				{
-					AddMovementInput(0, (CameraMovementSpeed * DeltaTime), 0, true);
-				}
-				if (GetKeyState('E') & 0x8000)
-				{
-					AddMovementInput(0, -(CameraMovementSpeed * DeltaTime), 0, true);
-				}
-
-				// Increase and decrease camera movement speed.
-				if (GetKeyState('B') & 0x8000)
-				{
-					if (CameraMovementSpeed < 40.0f)
-					{
-						CameraMovementSpeed += (17.0f * DeltaTime);
-					}
-				}
-				if (GetKeyState('V') & 0x8000)
-				{
-					if (CameraMovementSpeed > 1.0f)
-					{
-						CameraMovementSpeed -= (17.0f * DeltaTime);
-					}
-				}
-
-				// Field of view controls.
-				if (GetKeyState('N') & 0x8000)
-				{
-					if (FieldOfViewDeg < 100.0f)
-					{
-						RefreshCameraFOV((FieldOfViewDeg + (12.0f * DeltaTime)));
-					}
-				}
-				if (GetKeyState('M') & 0x8000)
-				{
-					if (FieldOfViewDeg > 40.0f)
-					{
-						RefreshCameraFOV((FieldOfViewDeg - (12.0f * DeltaTime)));
-					}
-				}
-
-				// Camera clipping near plane.
-				if (GetKeyState('P') & 0x8000)
-				{
-					if (NearClip < (FarClip - 10))
-					{
-						ChangeCameraClipping((NearClip + (5.0f * DeltaTime)), FarClip);
-					}
-				}
-				if (GetKeyState('O') & 0x8000)
-				{
-					if (NearClip > 0.1f)
-					{
-						ChangeCameraClipping((NearClip - (5.0f * DeltaTime)), FarClip);
-					}
-				}
-
-				// Camera clipping far plane.
-				if (GetKeyState('I') & 0x8000)
-				{
-					if (FarClip < 5000.0f)
-					{
-						ChangeCameraClipping(NearClip, (FarClip + (5.0f * DeltaTime)));
-					}
-				}
-				if (GetKeyState('U') & 0x8000)
-				{
-					if (FarClip > (NearClip + 10))
-					{
-						ChangeCameraClipping(NearClip, (FarClip - (5.0f * DeltaTime)));
-					}
-				}
-			}
-
-			// Get the starting position for the next frame.
-			GetCursorPos(&MousePosition);
-		}
-
+		void Update(float DeltaTime);
 
 
 		// ---------- Stuff for loading meshes, setting up the Object, and initializing values.--------------------------------------------------->
 		
 		// Create a camera, give it a debug name, then attach it to an object. Leave AttachTo as "nullptr" to not attach this camera to an object.
-		void CreateCamera(const char* DebugName, Object* AttachTo = nullptr)
-		{
-			Name = DebugName;
-			AttachTarget = AttachTo;
-			XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, XMMatrixIdentity());
-			XMStoreFloat4x4(&SpacialEnvironment.ViewMatrix, XMMatrixIdentity());
-			XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, NearClip, FarClip);
-			XMStoreFloat4x4(&SpacialEnvironment.ProjectionMatrix, Temp);
-		}
+		void CreateCamera(const char* DebugName, Object* AttachTo = nullptr);
 
 		// Sets a new FOV and changes the projection matrix.
-		void RefreshCameraFOV(float FOV = 90.0f)
-		{
-			FieldOfViewDeg = FOV;
-
-			XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, NearClip, FarClip);
-			XMStoreFloat4x4(&SpacialEnvironment.ProjectionMatrix, Temp);
-		}
+		void RefreshCameraFOV(float FOV = 90.0f);
 
 		// Sets a new Aspect Ratio and changes the projection matrix.
-		void RefreshCameraAspectRatio(float InRatio = 1.9f)
-		{
-			AspectRatio = InRatio;
-
-			XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, NearClip, FarClip);
-			XMStoreFloat4x4(&SpacialEnvironment.ProjectionMatrix, Temp);
-		}
+		void RefreshCameraAspectRatio(float InRatio = 1.9f);
 
 		// Sets a new Aspect Ratio and changes the projection matrix.
-		void ChangeCameraClipping(float MinZ, float MaxZ)
-		{
-			NearClip = MinZ;
-			FarClip = MaxZ;
-			XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, NearClip, FarClip);
-			XMStoreFloat4x4(&SpacialEnvironment.ProjectionMatrix, Temp);
-		}
-
+		void ChangeCameraClipping(float MinZ, float MaxZ);
 
 
 		// ---------- Memory management. -------------------------------------------------------------------------------------------------------->
 
 		// Called before the window closes.
-		void EndPlay()
-		{
-			if (AttachTarget != nullptr)
-			{
-				AttachTarget = nullptr;
-				delete AttachTarget;
-			}
-		}
+		void EndPlay();
 	};
 }
