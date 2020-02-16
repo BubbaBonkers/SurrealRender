@@ -115,6 +115,7 @@ namespace NRB
 		bool bIsVisible = true;
 		D3D_PRIMITIVE_TOPOLOGY TopologyType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 		float DiscoIntensity = 0.0f;
+		float WavingIntensity = 0.0f;
 
 	private:
 		float TickTime = 0.0f;
@@ -130,6 +131,9 @@ namespace NRB
 
 		// Rotate this object in a 3D world. Return the object's new World Matrix after rotation.
 		XMFLOAT4X4 AddRotationInput(float Pitch, float Yaw, float Roll, bool bIgnoreDeltaTime = false);
+
+		// Change the scale of this object.
+		XMFLOAT4X4 Scale(float X, float Y, float Z);
 
 
 		// ---------- Functionality for this object. --------------------------------------------------------------------------------------------->

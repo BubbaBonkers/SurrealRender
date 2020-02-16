@@ -176,8 +176,11 @@
     <ResourceCompile Include="D3D11_SurrealRender.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="Assets\BambooT.dds" />
     <Image Include="Assets\Crate.dds" />
     <Image Include="Assets\FancyBoxDDS.dds" />
+    <Image Include="Assets\Planet1.dds" />
+    <Image Include="Assets\TorchTexture.dds" />
     <Image Include="Assets\Willow_Trunk_D.dds" />
     <Image Include="D3D11_SurrealRender.ico" />
     <Image Include="small.ico" />
@@ -200,8 +203,11 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\Bamboo.mesh" />
     <None Include="Assets\cube.mesh" />
     <None Include="Assets\FancyBox.mesh" />
+    <None Include="Assets\Planet1.mesh" />
+    <None Include="Assets\Torch.mesh" />
     <None Include="Assets\WillowTreeFBX.mesh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

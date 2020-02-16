@@ -123,9 +123,11 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
 
     // Translate the object in world space.
     WorldObjects[0]->AddRotationInput(0, 1.0f, 0);
+    WorldObjects[3]->AddRotationInput(0, 0, 1.0f);
     WorldObjects[1]->AddMovementInput(0.0f, sin(G_GameTime) * 100.0f, 0.0f);
     WorldPointLights[0]->AddRotationInput(-5.0f, 0.0f, 0.0f);
     WorldPointLights[0]->AddMovementInput(-5.0f, 0.0f, 0.0f);
+    WorldObjects[2]->AddRotationInput(0, 0.05f, 0);
 
     XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationX(30.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
     XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationY(30.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
@@ -195,10 +197,11 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
         cb1.DeltaTime = DeltaTime;
         cb1.DiscoIntensity = WorldObjects[i]->DiscoIntensity;
         cb1.SpotLightColors[0] = WorldSpotLights[0]->Color;
-        cb1.SpotLightDirections[0] = XMFLOAT4(WorldSpotLights[0]->WorldMatrix._31, WorldSpotLights[0]->WorldMatrix._32, WorldSpotLights[0]->WorldMatrix._33, WorldSpotLights[0]->WorldMatrix._34);
+        cb1.SpotLightDirections[0] = XMFLOAT4(WorldSpotLights[0]->WorldMatrix._31, WorldSpotLights[0]->WorldMatrix._22, WorldSpotLights[0]->WorldMatrix._13, WorldSpotLights[0]->WorldMatrix._44);
         cb1.SpotLightPositions[0] = XMFLOAT4(WorldSpotLights[0]->WorldMatrix._41, WorldSpotLights[0]->WorldMatrix._42, WorldSpotLights[0]->WorldMatrix._43, WorldSpotLights[0]->WorldMatrix._44);
         cb1.SpotLightConeRatios = WorldSpotLights[0]->ConeAngle;
         cb1.SpotLightIntensities = WorldSpotLights[0]->Intensity;
+        cb1.WavingIntensity = WorldObjects[0]->WavingIntensity;
 
         // Send data to the graphics card.
         D3D11_MAPPED_SUBRESOURCE GPUBufferCDS;

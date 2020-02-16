@@ -310,34 +310,53 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    MainDisplay->Device->CreateTexture2D(&TextureDesc, nullptr, &MainDisplay->DiffuseTexture);
 
-   // Load the new mesh shader.
-   //hr = MainDisplay->Device->CreateVertexShader(GeneralMeshVertexShaders, sizeof(GeneralMeshVertexShaders), nullptr, &MainDisplay->MeshVertexShader);
-
-   // Create the cube.mesh for testing the object creation.
+   // Simple Testing Cube.
    Object* CubeTest = MainDisplay->CreateObject("TestingCube", "Assets/cube.mesh", "Assets/Crate.dds");
    Object* MultipleObjectTest = MainDisplay->CreateObject("SecondCube", "Assets/FancyBox.mesh", "Assets/FancyBoxDDS.dds");
    MultipleObjectTest->AddMovementInput(300.0f, -50.0f, 55.0f, true);
    MultipleObjectTest->AddRotationInput(-5.0f, 3.0f, 0.0f, true);
-   Object* StaticSinWaveCube = MainDisplay->CreateObject("TestingCube", "Assets/cube.mesh", "Assets/Crate.dds");
+
+   // Waving Cube.
+   Object* WavingCube = MainDisplay->CreateObject("TorchTest", "Assets/Planet1.mesh", "Assets/Planet1.dds");
+   WavingCube->AddMovementInput(1600.0f, 100.0f, -1600.0f, true);
+   WavingCube->Scale(2.0f, 2.0f, 2.0f);
+   WavingCube->WavingIntensity = 1.0f;
+
+   // Disco Cube.
+   Object* StaticSinWaveCube = MainDisplay->CreateObject("TestingCubeWave", "Assets/cube.mesh", "Assets/Crate.dds");
    StaticSinWaveCube->DiscoIntensity = 1.0f;
    StaticSinWaveCube->AddMovementInput(-300.0f, 110.0f, -250.0f, true);
-   Object* Willow = MainDisplay->CreateObject("WillowTreeTest", "Assets/WillowTreeFBX.mesh", "Assets/Willow_Trunk_D.dds");
-   Willow->AddMovementInput(-250.0f, 150.0f, -55.0f, true);
 
-   // Create the camera to view the world through.
+   // Testing Torch Mesh.
+   Object* Torch = MainDisplay->CreateObject("TorchTest", "Assets/Torch.mesh", "Assets/TorchTexture.dds");
+   Torch->Scale(30.0f, 30.0f, 30.0f);
+   Torch->AddMovementInput(-250.0f, 150.0f, 150.0f, true);
+
+   // Testing Bamboo Mesh.
+   Object* Bamboo = MainDisplay->CreateObject("Bamboo", "Assets/Bamboo.mesh", "Assets/BambooT.dds");
+   Bamboo->Scale(30.0f, 30.0f, 30.0f);
+   Bamboo->AddMovementInput(250.0f, 50.0f, -150.0f, true);
+
+   // Camera Acting as Eyes.
    Camera* MainCamera = MainDisplay->CreateCamera("Eyes");
    MainCamera->AddMovementInput(0, 3.0f, -5.0f);
    MainCamera->AddRotationInput(-0.45f, 0.0f, 0.0f, true, true);
    MainCamera->LookAtTarget = MultipleObjectTest;
 
-   // Create a light.
+   // Directional Light.
    MainDisplay->CreateDirectionalLight("Sunlight", { 1, 1, 1, 1 }, { 1, 1, 1, 1 }, 1.0f);
+
+   // Dynamic Point Light.
    MainDisplay->CreatePointLight("PointLightTest", { 0, 1, 1, 1 }, 1.0f);
-   MainDisplay->CreatePointLight("StaticPointLight", { 1, 1, 1, 1 }, 1.0f);
-   MainDisplay->CreateSpotLight("SpotLightTest", { 1, 1, 1, 1 }, 1.0f);
    XMStoreFloat4x4(&MainDisplay->WorldPointLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(13.0f, 15.0f, 0.0f), XMLoadFloat4x4(&MainDisplay->WorldPointLights[0]->WorldMatrix)));
+
+   // Static Point Light.
+   MainDisplay->CreatePointLight("StaticPointLight", { 1, 1, 1, 1 }, 1.0f);
    XMStoreFloat4x4(&MainDisplay->WorldPointLights[1]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(10.0f, 5.0f, 3.0f), XMLoadFloat4x4(&MainDisplay->WorldPointLights[1]->WorldMatrix)));
-   XMStoreFloat4x4(&MainDisplay->WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(10.0f, 10.0f, 0.0f), XMLoadFloat4x4(&MainDisplay->WorldSpotLights[0]->WorldMatrix)));
+
+   // SimpleSpot Light Test.
+   MainDisplay->CreateSpotLight("SpotLightTest", { 1, 1, 1, 1 }, 1.0f);
+   XMStoreFloat4x4(&MainDisplay->WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(5.0f, 5.0f, 5.0f), XMLoadFloat4x4(&MainDisplay->WorldSpotLights[0]->WorldMatrix)));
 
    return TRUE;
 }

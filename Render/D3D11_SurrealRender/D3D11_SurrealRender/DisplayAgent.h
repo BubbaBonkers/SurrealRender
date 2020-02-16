@@ -35,6 +35,7 @@ public:
 		float WorldTime;
 		float DeltaTime;
 		float DiscoIntensity;
+		float WavingIntensity;
 	};
 
 	ID3D11Device*				Device = nullptr;

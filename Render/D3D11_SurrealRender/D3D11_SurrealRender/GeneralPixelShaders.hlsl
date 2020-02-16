@@ -32,12 +32,15 @@ cbuffer ConstantBuffer : register(b0)	// b for Buffer, and 0 for slot 0 in GPU.
     float WorldTime;
     float DeltaTime;
     float DiscoIntensity;
+    float WavingIntensity;
 };
 
 float4 main(VS_OUTPUT InputPixel) : SV_TARGET
 {
     // Get pixel color for texture.
 	float4 FinalColor = txDiffuse.Sample(samLinear, InputPixel.Texture);
+    if(FinalColor.a < 0.2f)
+        discard;
     FinalColor.a = 1;
     
     // Get the ambient lighting.

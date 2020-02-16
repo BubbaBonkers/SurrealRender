@@ -179,10 +179,18 @@ XMFLOAT4X4 NRB::Object::AddRotationInput(float Pitch, float Yaw, float Roll, boo
 	// Rotate the object in world space.
 	XMMATRIX Base = XMLoadFloat4x4(&WorldMatrix);
 	XMMATRIX Rotated = XMMatrixRotationRollPitchYaw((Pitch * Multiplier), (Yaw * Multiplier), (Roll * Multiplier));
-	Rotated = XMMatrixMultiply(Base, Rotated);
+	Rotated = XMMatrixMultiply(Rotated, Base);
 
 	// Store the new information.
 	XMStoreFloat4x4(&WorldMatrix, Rotated);
+
+	return WorldMatrix;
+}
+
+// Change the scale of this object.
+XMFLOAT4X4 NRB::Object::Scale(float X, float Y, float Z)
+{
+	XMStoreFloat4x4(&WorldMatrix, XMMatrixMultiply(XMMatrixScaling(X, Y, Z), XMLoadFloat4x4(&WorldMatrix)));
 
 	return WorldMatrix;
 }

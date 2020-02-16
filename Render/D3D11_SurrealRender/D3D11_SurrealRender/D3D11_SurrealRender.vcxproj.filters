@@ -99,6 +99,15 @@
     <Image Include="Assets\Willow_Trunk_D.dds">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="Assets\TorchTexture.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\BambooT.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Planet1.dds">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="GeneralPixelShaders.hlsl">
@@ -116,6 +125,15 @@
       <Filter>Assets</Filter>
     </None>
     <None Include="Assets\WillowTreeFBX.mesh">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="Assets\Torch.mesh">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="Assets\Bamboo.mesh">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="Assets\Planet1.mesh">
       <Filter>Assets</Filter>
     </None>
   </ItemGroup>

@@ -36,6 +36,7 @@ cbuffer ConstantBuffer : register(b0)	// b for Buffer, and 0 for slot 0 in GPU.
     float WorldTime;
     float DeltaTime;
     float DiscoIntensity;
+    float WavingIntensity;
 };
 
 VS_OUTPUT main(VS_INPUT Input)
@@ -52,6 +53,11 @@ VS_OUTPUT main(VS_INPUT Input)
 	Output.Wposition = mul(WorldMatrix, Output.Position);
 	Output.Position = mul(ViewMatrix, Output.Position);
 	Output.Position = mul(ProjectionMatrix, Output.Position);
+    
+    if (WavingIntensity > 0.0f)
+    {
+        Output.Position.xyz += (Input.Normal * sin(Input.Position.x * 3.0f + WorldTime) * 0.2f) * WavingIntensity;
+    }
 	
 	// Blinn-Phong Calculation.
     /*float3 BP_Normal = Input.Normal;
