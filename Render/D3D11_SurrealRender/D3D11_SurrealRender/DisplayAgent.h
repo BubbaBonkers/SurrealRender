@@ -20,13 +20,21 @@ public:
 		XMMATRIX CameraWorldMatrix;
 		XMFLOAT4 AmbientLightColor;
 		XMFLOAT4 DirectionalLightDirections[1];
+		XMFLOAT4 SpotLightDirections[1];
 		XMFLOAT4 PointLightPositions[1];
+		XMFLOAT4 SpotLightPositions[1];
 		XMFLOAT4 DirectionalLightColors[1];
 		XMFLOAT4 PointLightColors[1];
+		XMFLOAT4 SpotLightColors[1];
+		float SpotLightConeRatios;
+		float SpotLightIntensities;
 		float DirectionalLightIntensities;
 		float AmbientLightIntensity;
 		float PointLightIntensities;
 		float BlinnPhongIntensity;
+		float WorldTime;
+		float DeltaTime;
+		float DiscoIntensity;
 	};
 
 	ID3D11Device*				Device = nullptr;
@@ -54,7 +62,10 @@ public:
 	std::vector<Camera*> WorldCameras;
 	std::vector<Object*> WorldObjects;
 	std::vector<DirectionalLight*> WorldDirectionalLights;
+	std::vector<SpotLight*> WorldSpotLights;
 	std::vector<PointLight*> WorldPointLights;
+
+	float G_GameTime = 0.0f;								// Global game time, in seconds, that has passed since the game started.
 
 	// Graphics control options. -------------------------------------------------------------------->
 	float RenderBackgroundColor[4] = { 0.45f, 0.45f, 0.45f, 0.45f };	// The color of the default background to set the renderer to when clearing DepthStencil and Viewport.
@@ -63,7 +74,7 @@ public:
 
 	// World control options. ----------------------------------------------------------------------->
 	XMFLOAT4 AmbientLightCol = { 1, 1, 0, 1 };							// Color of the ambient lighting in the world.
-	float AmbientLightIntense = 0.15f;									// Intensity of the ambient light on the environment.
+	float AmbientLightIntense = 0.1f;									// Intensity of the ambient light on the environment.
 
 	// Setup render target and present.
 	void PresentFromRenderTarget(Camera* Cam, Object* Obj, float DeltaTime = 1.0f);
@@ -77,6 +88,7 @@ public:
 
 	// Create a new directional light.
 	DirectionalLight* CreateDirectionalLight(const char* DebugName, XMFLOAT4 direction = { 1, 1, 1, 1 }, XMFLOAT4 color = { 1, 1, 1, 1 }, float intensity = 1.0f);
+	SpotLight* CreateSpotLight(const char* DebugName, XMFLOAT4 color = { 1, 1, 1, 1 }, float intensity = 1.0f);
 	PointLight* CreatePointLight(const char* DebugName, XMFLOAT4 color = { 1, 1, 1, 1 }, float intensity = 1.0f);
 
 	// Called every frame.

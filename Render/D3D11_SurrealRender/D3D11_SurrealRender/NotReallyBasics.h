@@ -92,6 +92,12 @@ namespace NRB
 	class Object
 	{
 	public:
+		// For primitive shapes.
+		enum PRIM_TYPE {
+			LINE,
+			GRID
+		};
+
 		// Spacial cognition for object class.
 		XMFLOAT4X4 WorldMatrix;
 
@@ -107,6 +113,8 @@ namespace NRB
 
 		// Below is extra functionality in case it is needed in the future.
 		bool bIsVisible = true;
+		D3D_PRIMITIVE_TOPOLOGY TopologyType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		float DiscoIntensity = 0.0f;
 
 	private:
 		float TickTime = 0.0f;
@@ -139,6 +147,12 @@ namespace NRB
 		int CountIndices();
 
 
+		// ---------- Primitive shape functions. ------------------------------------------------------------------------------------------------->
+
+		// Create a primitive shape out of vertex and index data, then load it into this object.
+		void LoadPrimitive(PRIM_TYPE Type = LINE);
+
+
 		// ---------- Stuff for loading meshes, setting up the Object, and initializing values.--------------------------------------------------->
 
 		// Create the basic information in this object by using input values. Basic object, no meshes.
@@ -169,10 +183,14 @@ namespace NRB
 		float AspectRatio = 1.8667f;										// Aspect Ratio for the view. Set automatically.
 		float FieldOfViewDeg = 70.0f;										// Field of view in degrees.
 		Object* AttachTarget = nullptr;										// The object this camera is attached to (following). Leave as "nullptr" to disable attachment.
+		Object* LookAtTarget = nullptr;
 
 		// Camera physical attributes.
 		float CameraMovementSpeed = 8.0f;									// Speed of camera movement in 3D space.
-		float CameraRotationSpeed = 8.0f;									// Rate at which the camera rotates when you look around.
+		float CameraRotationSpeed = 7.0f;									// Rate at which the camera rotates when you look around.
+
+		// Temp variables for testing features.
+		bool RotateDirLight = false;
 
 	private:
 		float TickTime = 0.0f;

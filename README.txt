@@ -1,4 +1,4 @@
-Controlling the Camera: Right click and hold in the viewport to take control of the camera. Controls work only when right clicking and holding.
+Controlling the Camera: Right click and hold in the viewport to take control of the camera. The following controls work only when right clicking and holding.
 	- [ Mouse X & Y ] 	Look Around the World
 	- [ WASD ] 	Move Around the World
 	- [ Q ] 		Move Directly Up
@@ -11,8 +11,12 @@ Controlling the Camera: Right click and hold in the viewport to take control of 
 	- [ O ] 		Decrease Near Clip Distance
 	- [ I ] 		Increase Far Clip Distance
 	- [ U ] 		Decrease Far Clip Distance
+	- [ L-Shift ]		Rotate directional light.
+
+The following controls can only be done when not holding down the RMB.
+	- [ Tab ] 		Make the camera look at the cube that is rising up.
+	- [ L-Shift ]		Rotate directional light.
 
 Notes:
 	- The point light slowly rotates about and falls down from the scene, so the green light is the point light and will eventually disappear to show that it is dynamic.
 	- The cube will light up for the directional light, and get dim and dark for the ambient light.
-	- I have references not being released, I could not figure out what they were in time, so I did not mark the points on the rubric.

@@ -21,6 +21,10 @@ void DisplayAgent::Update(float DeltaTime)
     {
         WorldPointLights[i]->Update(DeltaTime);
     }
+    for (unsigned int i = 0; i < WorldDirectionalLights.size(); ++i)
+    {
+        WorldDirectionalLights[i]->Update(DeltaTime);
+    }
 }
 
 // Called before the window closes.
@@ -75,6 +79,16 @@ DirectionalLight* DisplayAgent::CreateDirectionalLight(const char* DebugName, XM
     return NewDirLight;
 }
 
+// Create a new spot light.
+SpotLight* DisplayAgent::CreateSpotLight(const char* DebugName, XMFLOAT4 color, float intensity)
+{
+    SpotLight* NewSpotLight = new SpotLight();
+    NewSpotLight->CreateLight(DebugName, color, intensity);
+    WorldSpotLights.push_back(NewSpotLight);
+
+    return NewSpotLight;
+}
+
 // Create a new point light.
 PointLight* DisplayAgent::CreatePointLight(const char* DebugName, XMFLOAT4 color, float intensity)
 {
@@ -95,6 +109,12 @@ void DisplayAgent::ChangeAspectRatio(float InRatio)
 
 void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float DeltaTime)
 {
+    // Assert that the constant buffer remains 16-byte aligned.
+    //static_assert((sizeof(ConstantBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned!");
+
+    // Increase global game time.
+    G_GameTime += DeltaTime;
+
     // Update all objects and cameras.
     Context->ClearRenderTargetView(RenderTargetView, RenderBackgroundColor);
     Context->ClearDepthStencilView(ZBufferView, D3D11_CLEAR_DEPTH, 1.0f, 0);
@@ -103,9 +123,20 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
 
     // Translate the object in world space.
     WorldObjects[0]->AddRotationInput(0, 1.0f, 0);
-    WorldObjects[1]->AddMovementInput(0.0f, 5.0f, 0.0f);
-    WorldPointLights[0]->AddRotationInput(-5.0f, -5.0f, -5.0f);
+    WorldObjects[1]->AddMovementInput(0.0f, sin(G_GameTime) * 100.0f, 0.0f);
+    WorldPointLights[0]->AddRotationInput(-5.0f, 0.0f, 0.0f);
     WorldPointLights[0]->AddMovementInput(-5.0f, 0.0f, 0.0f);
+
+    XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationX(30.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
+    XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationY(30.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
+    XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationZ(30.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
+
+    //WorldCameras[0]->LookAtLocation(WorldObjects[1]->WorldMatrix._41, WorldObjects[1]->WorldMatrix._42, WorldObjects[1]->WorldMatrix._43);
+
+    if (Cam->RotateDirLight)
+    {
+        WorldDirectionalLights[0]->AddRotationInput(2.0f, 3.0f, 1.0f);
+    }
 
     for (unsigned int i = 0; i < WorldObjects.size(); ++i)
     {
@@ -138,7 +169,7 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
         UINT MeshStrides[] = { sizeof(Vertex) };
         UINT MeshOffsets[] = { 0 };
         ID3D11Buffer* TempMeshVertexBuffer[] = { WorldObjects[i]->VertexBuffer };
-        Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        Context->IASetPrimitiveTopology(WorldObjects[i]->TopologyType);
         Context->IASetVertexBuffers(0, 1, TempMeshVertexBuffer, MeshStrides, MeshOffsets);
         Context->IASetIndexBuffer(WorldObjects[i]->IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
         Context->IASetInputLayout(InputLayout);
@@ -159,13 +190,22 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
         cb1.PointLightIntensities = WorldPointLights[0]->Intensity;
         cb1.PointLightPositions[0] = XMFLOAT4(WorldPointLights[0]->WorldMatrix._41, WorldPointLights[0]->WorldMatrix._42, WorldPointLights[0]->WorldMatrix._43, WorldPointLights[0]->WorldMatrix._44);
         cb1.CameraWorldMatrix = XMLoadFloat4x4(&Cam->SpacialEnvironment.WorldMatrix);
-        cb1.BlinnPhongIntensity = 64.0f;
+        cb1.BlinnPhongIntensity = 32.0f;
+        cb1.WorldTime = G_GameTime;
+        cb1.DeltaTime = DeltaTime;
+        cb1.DiscoIntensity = WorldObjects[i]->DiscoIntensity;
+        cb1.SpotLightColors[0] = WorldSpotLights[0]->Color;
+        cb1.SpotLightDirections[0] = XMFLOAT4(WorldSpotLights[0]->WorldMatrix._31, WorldSpotLights[0]->WorldMatrix._32, WorldSpotLights[0]->WorldMatrix._33, WorldSpotLights[0]->WorldMatrix._34);
+        cb1.SpotLightPositions[0] = XMFLOAT4(WorldSpotLights[0]->WorldMatrix._41, WorldSpotLights[0]->WorldMatrix._42, WorldSpotLights[0]->WorldMatrix._43, WorldSpotLights[0]->WorldMatrix._44);
+        cb1.SpotLightConeRatios = WorldSpotLights[0]->ConeAngle;
+        cb1.SpotLightIntensities = WorldSpotLights[0]->Intensity;
 
         // Send data to the graphics card.
         D3D11_MAPPED_SUBRESOURCE GPUBufferCDS;
         Context->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &GPUBufferCDS);
         memcpy(GPUBufferCDS.pData, &cb1, sizeof(cb1));
         Context->Unmap(ConstantBuffer, 0);
+
 
         // Apply matrix math in vertex shader and connect the constant buffer to the pipeline.
         ID3D11Buffer* Constants[] = { ConstantBuffer };
@@ -179,6 +219,10 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
         Context->PSSetConstantBuffers(0, 1, Constants);
         Context->PSSetShaderResources(0, 1, &WorldObjects[i]->ShaderResourceView);
         Context->PSSetSamplers(0, 1, &LinearSamplerState);
+
+        unsigned int sizer = sizeof(ConstantBuffer);
+        unsigned int size = sizeof(cb1);
+        assert((sizeof(cb1) % 16) == 0);
 
         // Draw and Present.
 

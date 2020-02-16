@@ -15,19 +15,27 @@ struct VS_OUTPUT
 
 cbuffer ConstantBuffer : register(b0)	// b for Buffer, and 0 for slot 0 in GPU.
 {
-	float4x4 WorldMatrix;
-	float4x4 ViewMatrix;
-	float4x4 ProjectionMatrix;
+    float4x4 WorldMatrix;
+    float4x4 ViewMatrix;
+    float4x4 ProjectionMatrix;
     float4x4 CameraWorldMatrix;
-	float4 AmbientLightColor;
-	float4 DirectionalLightDirections[1];
-	float4 PointLightPositions[1];
-	float4 DirectionalLightColors[1];
-	float4 PointLightColors[1];
-	float DirectionalLightIntensities;
-	float AmbientLightIntensity;
-	float PointLightIntensities;
+    float4 AmbientLightColor;
+    float4 DirectionalLightDirections[1];
+    float4 SpotLightDirections[1];
+    float4 PointLightPositions[1];
+    float4 SpotLightPositions[1];
+    float4 DirectionalLightColors[1];
+    float4 PointLightColors[1];
+    float4 SpotLightColors[1];
+    float SpotLightConeRatios;
+    float SpotLightIntensities;
+    float DirectionalLightIntensities;
+    float AmbientLightIntensity;
+    float PointLightIntensities;
     float BlinnPhongIntensity;
+    float WorldTime;
+    float DeltaTime;
+    float DiscoIntensity;
 };
 
 VS_OUTPUT main(VS_INPUT Input)
@@ -37,6 +45,7 @@ VS_OUTPUT main(VS_INPUT Input)
 	Output.Position = float4(Input.Position.xyz, 1);
 	Output.Texture = Input.Texture;
 	Output.Normal = mul(WorldMatrix, float4(Input.Normal.xyz,0)).xyz;
+    Output.Normal = normalize(Output.Normal);
 
 	// Get the matrices to match up with object position.
 	Output.Position = mul(WorldMatrix, Output.Position);

@@ -205,6 +205,23 @@ int NRB::Object::CountIndices()
 	return Indices.size();
 }
 
+// Create a primitive shape out of vertex and index data, then load it into this object.
+void NRB::Object::LoadPrimitive(PRIM_TYPE Type)
+{
+	switch (Type)
+	{
+		case LINE:
+		{
+			
+		}
+
+		case GRID:
+		{
+
+		}
+	}
+}
+
 // Create the basic information in this object by using input values. Basic object, no meshes.
 void NRB::Object::CreateObject(const char* DebugName, const char* TextureDDS, std::vector<Vertex> VertexData, std::vector<int> IndexData, bool bHide)
 {
@@ -386,7 +403,8 @@ XMFLOAT4X4 NRB::Camera::AddRotationInput(float Pitch, float Yaw, float Roll, boo
 void NRB::Camera::LookAtLocation(float x, float y, float z)
 {
 	// Look at a specified object in the world.
-	XMMatrixLookAtLH({ SpacialEnvironment.WorldMatrix._11, SpacialEnvironment.WorldMatrix._12, SpacialEnvironment.WorldMatrix._13 }, { x, y, z }, { 0, 1, 0 });
+	XMMATRIX LookNew = XMMatrixLookAtLH({ SpacialEnvironment.WorldMatrix._41, SpacialEnvironment.WorldMatrix._42, SpacialEnvironment.WorldMatrix._43 }, { x, y, z }, { 0, 1, 0 });
+	XMStoreFloat4x4(&SpacialEnvironment.WorldMatrix, LookNew);
 }
 
 // Called every frame.
@@ -416,7 +434,7 @@ void NRB::Camera::Update(float DeltaTime)
 			POINT NewPosition = { MousePosition.x - TempMousePosition.x, MousePosition.y - TempMousePosition.y };
 			AddRotationInput((NewPosition.y * (CameraRotationSpeed)), (NewPosition.x * (CameraRotationSpeed)), 0, true);
 		}
-
+		
 		// Move forward, backward, and side to side.
 		if (GetKeyState('W') & 0x8000)
 		{
@@ -460,54 +478,76 @@ void NRB::Camera::Update(float DeltaTime)
 				CameraMovementSpeed -= (17.0f * DeltaTime);
 			}
 		}
+	}
+	else
+	{
+		// Look at the moving cube..
+		if (GetKeyState(VK_TAB) & 0x8000)
+		{
+			if (LookAtTarget)
+			{
+				LookAtLocation(LookAtTarget->WorldMatrix._41, LookAtTarget->WorldMatrix._42, LookAtTarget->WorldMatrix._43);
+			}
+		}
+	}
 
-		// Field of view controls.
-		if (GetKeyState('N') & 0x8000)
+	// Field of view controls.
+	if (GetKeyState('N') & 0x8000)
+	{
+		if (FieldOfViewDeg < 100.0f)
 		{
-			if (FieldOfViewDeg < 100.0f)
-			{
-				RefreshCameraFOV((FieldOfViewDeg + (12.0f * DeltaTime)));
-			}
+			RefreshCameraFOV((FieldOfViewDeg + (12.0f * DeltaTime)));
 		}
-		if (GetKeyState('M') & 0x8000)
+	}
+	if (GetKeyState('M') & 0x8000)
+	{
+		if (FieldOfViewDeg > 40.0f)
 		{
-			if (FieldOfViewDeg > 40.0f)
-			{
-				RefreshCameraFOV((FieldOfViewDeg - (12.0f * DeltaTime)));
-			}
+			RefreshCameraFOV((FieldOfViewDeg - (12.0f * DeltaTime)));
 		}
+	}
 
-		// Camera clipping near plane.
-		if (GetKeyState('P') & 0x8000)
+	// Camera clipping near plane.
+	if (GetKeyState('P') & 0x8000)
+	{
+		if (NearClip < (FarClip - 10))
 		{
-			if (NearClip < (FarClip - 10))
-			{
-				ChangeCameraClipping((NearClip + (5.0f * DeltaTime)), FarClip);
-			}
+			ChangeCameraClipping((NearClip + (5.0f * DeltaTime)), FarClip);
 		}
-		if (GetKeyState('O') & 0x8000)
+	}
+	if (GetKeyState('O') & 0x8000)
+	{
+		if (NearClip > 0.1f)
 		{
-			if (NearClip > 0.1f)
-			{
-				ChangeCameraClipping((NearClip - (5.0f * DeltaTime)), FarClip);
-			}
+			ChangeCameraClipping((NearClip - (5.0f * DeltaTime)), FarClip);
 		}
+	}
 
-		// Camera clipping far plane.
-		if (GetKeyState('I') & 0x8000)
+	// Camera clipping far plane.
+	if (GetKeyState('I') & 0x8000)
+	{
+		if (FarClip < 5000.0f)
 		{
-			if (FarClip < 5000.0f)
-			{
-				ChangeCameraClipping(NearClip, (FarClip + (5.0f * DeltaTime)));
-			}
+			ChangeCameraClipping(NearClip, (FarClip + (5.0f * DeltaTime)));
 		}
-		if (GetKeyState('U') & 0x8000)
+	}
+	if (GetKeyState('U') & 0x8000)
+	{
+		if (FarClip > (NearClip + 10))
 		{
-			if (FarClip > (NearClip + 10))
-			{
-				ChangeCameraClipping(NearClip, (FarClip - (5.0f * DeltaTime)));
-			}
+			ChangeCameraClipping(NearClip, (FarClip - (5.0f * DeltaTime)));
 		}
+	}
+
+	// Feature testing for turn ins. Temporary.
+	// Rotate the directional light.
+	if (GetKeyState(VK_SHIFT) & 0x8000)
+	{
+		RotateDirLight = true;
+	}
+	else
+	{
+		RotateDirLight = false;
 	}
 
 	// Get the starting position for the next frame.
@@ -559,5 +599,11 @@ void NRB::Camera::EndPlay()
 	{
 		AttachTarget = nullptr;
 		delete AttachTarget;
+	}
+
+	if (LookAtTarget != nullptr)
+	{
+		LookAtTarget = nullptr;
+		delete LookAtTarget;
 	}
 }

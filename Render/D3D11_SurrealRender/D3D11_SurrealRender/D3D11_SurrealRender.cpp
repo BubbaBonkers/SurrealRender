@@ -108,7 +108,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             break;
         }
 
-        MainDisplay->PresentFromRenderTarget(MainDisplay->WorldCameras[0], MainDisplay->WorldObjects[0]);
+        MainDisplay->PresentFromRenderTarget(MainDisplay->WorldCameras[0], MainDisplay->WorldObjects[0], DeltaTime);
     }
 
     // Release all used D3D interfaces.
@@ -197,7 +197,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    Swap.BufferDesc.Width = WindowRectangle.right - WindowRectangle.left;
    Swap.BufferDesc.Height = WindowRectangle.bottom - WindowRectangle.top;
    Swap.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-   Swap.SampleDesc.Count = 1;
+   Swap.SampleDesc.Count = 8;
+   Swap.SampleDesc.Quality = 0;
 
    // Set aspect ratio for world and cameras.
    MainDisplay->ChangeAspectRatio((float)Swap.BufferDesc.Width / (float)Swap.BufferDesc.Height);
@@ -226,8 +227,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    ZDesc.Height = Swap.BufferDesc.Height;
    ZDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
    ZDesc.Usage = D3D11_USAGE_DEFAULT;
+   ZDesc.CPUAccessFlags = 0;
    ZDesc.MipLevels = 1;
-   ZDesc.SampleDesc.Count = 1;
+   ZDesc.SampleDesc.Count = 8;
    ZDesc.SampleDesc.Quality = 0;
    hr = MainDisplay->Device->CreateTexture2D(&ZDesc, nullptr, &MainDisplay->ZBuffer);
 
@@ -316,6 +318,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    Object* MultipleObjectTest = MainDisplay->CreateObject("SecondCube", "Assets/FancyBox.mesh", "Assets/FancyBoxDDS.dds");
    MultipleObjectTest->AddMovementInput(300.0f, -50.0f, 55.0f, true);
    MultipleObjectTest->AddRotationInput(-5.0f, 3.0f, 0.0f, true);
+   Object* StaticSinWaveCube = MainDisplay->CreateObject("TestingCube", "Assets/cube.mesh", "Assets/Crate.dds");
+   StaticSinWaveCube->DiscoIntensity = 1.0f;
+   StaticSinWaveCube->AddMovementInput(-300.0f, 110.0f, -250.0f, true);
    Object* Willow = MainDisplay->CreateObject("WillowTreeTest", "Assets/WillowTreeFBX.mesh", "Assets/Willow_Trunk_D.dds");
    Willow->AddMovementInput(-250.0f, 150.0f, -55.0f, true);
 
@@ -323,13 +328,16 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    Camera* MainCamera = MainDisplay->CreateCamera("Eyes");
    MainCamera->AddMovementInput(0, 3.0f, -5.0f);
    MainCamera->AddRotationInput(-0.45f, 0.0f, 0.0f, true, true);
+   MainCamera->LookAtTarget = MultipleObjectTest;
 
    // Create a light.
    MainDisplay->CreateDirectionalLight("Sunlight", { 1, 1, 1, 1 }, { 1, 1, 1, 1 }, 1.0f);
    MainDisplay->CreatePointLight("PointLightTest", { 0, 1, 1, 1 }, 1.0f);
-   MainDisplay->CreatePointLight("StaticPointLight", { 1, 0, 1, 1 }, 1.0f);
+   MainDisplay->CreatePointLight("StaticPointLight", { 1, 1, 1, 1 }, 1.0f);
+   MainDisplay->CreateSpotLight("SpotLightTest", { 1, 1, 1, 1 }, 1.0f);
    XMStoreFloat4x4(&MainDisplay->WorldPointLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(13.0f, 15.0f, 0.0f), XMLoadFloat4x4(&MainDisplay->WorldPointLights[0]->WorldMatrix)));
    XMStoreFloat4x4(&MainDisplay->WorldPointLights[1]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(10.0f, 5.0f, 3.0f), XMLoadFloat4x4(&MainDisplay->WorldPointLights[1]->WorldMatrix)));
+   XMStoreFloat4x4(&MainDisplay->WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(10.0f, 10.0f, 0.0f), XMLoadFloat4x4(&MainDisplay->WorldSpotLights[0]->WorldMatrix)));
 
    return TRUE;
 }
