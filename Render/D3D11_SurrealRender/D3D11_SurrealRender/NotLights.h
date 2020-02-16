@@ -38,7 +38,7 @@ public:
 	XMFLOAT4X4 WorldMatrix;								// Location in 3D space.
 
 	// Directional Light specific stuffs.
-	float ConeAngle = 100.0f;							// The angle that the cone opens to.
+	float ConeAngle = 20.0f;							// The angle that the cone opens to.
 	float ConeLength = 300.0f;							// The farthest reach of the light emitted from this cone.
 
 	// Initialize this light for use in the game world. Takes in a direction, color, and intensity.

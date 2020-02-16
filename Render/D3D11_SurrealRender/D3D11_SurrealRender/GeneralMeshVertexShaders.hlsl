@@ -21,12 +21,13 @@ cbuffer ConstantBuffer : register(b0)	// b for Buffer, and 0 for slot 0 in GPU.
     float4x4 CameraWorldMatrix;
     float4 AmbientLightColor;
     float4 DirectionalLightDirections[1];
-    float4 SpotLightDirections[1];
+    float4 SpotLightDirections[2];
     float4 PointLightPositions[1];
-    float4 SpotLightPositions[1];
+    float4 SpotLightPositions[2];
     float4 DirectionalLightColors[1];
     float4 PointLightColors[1];
     float4 SpotLightColors[1];
+    float4 EmissiveColor;
     float SpotLightConeRatios;
     float SpotLightIntensities;
     float DirectionalLightIntensities;
@@ -56,7 +57,25 @@ VS_OUTPUT main(VS_INPUT Input)
     
     if (WavingIntensity > 0.0f)
     {
-        Output.Position.xyz += (Input.Normal * sin(Input.Position.x * 3.0f + WorldTime) * 0.2f) * WavingIntensity;
+        Output.Position.xy += Input.Normal * sin(Input.Position.xyz * 19.0f + WorldTime) * 1.1f; // * WavingIntensity;
+    }
+    
+    // Mirror surface.
+    if (false)
+    {
+        Output.Texture += Input.Normal * sin(Input.Position.x * 10.0f + WorldTime) * 1.0f; // * WavingIntensity;
+    }
+    
+    // Color wave.
+    if (false)
+    {
+        Output.Normal += Input.Normal * sin(Input.Position.x * 10.0f + WorldTime) * 1.0f; // * WavingIntensity;
+    }
+    
+    // Dimension 4
+    if (false)
+    {
+        Output.Position.xyz *= Input.Normal * sin(Input.Position.x * 10.0f + WorldTime) * 1.0f; // * WavingIntensity;
     }
 	
 	// Blinn-Phong Calculation.

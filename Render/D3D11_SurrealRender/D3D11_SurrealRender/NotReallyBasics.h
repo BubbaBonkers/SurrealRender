@@ -113,9 +113,10 @@ namespace NRB
 
 		// Below is extra functionality in case it is needed in the future.
 		bool bIsVisible = true;
-		D3D_PRIMITIVE_TOPOLOGY TopologyType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		XMFLOAT4 EmissiveColor = { 0, 0, 0, 0 };
 		float DiscoIntensity = 0.0f;
 		float WavingIntensity = 0.0f;
+		D3D_PRIMITIVE_TOPOLOGY TopologyType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
 	private:
 		float TickTime = 0.0f;

@@ -18,5 +18,7 @@ The following controls can only be done when not holding down the RMB.
 	- [ L-Shift ]		Rotate directional light.
 
 Notes:
+	- The emissive material is on the cube that is lighting up. It is the same cube as the rest, just this one has an emissive brightness of { 3, 3, 3, 3 }.
+
 	- The point light slowly rotates about and falls down from the scene, so the green light is the point light and will eventually disappear to show that it is dynamic.
 	- The cube will light up for the directional light, and get dim and dark for the ambient light.

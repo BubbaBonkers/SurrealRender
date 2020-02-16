@@ -124,16 +124,15 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
     // Translate the object in world space.
     WorldObjects[0]->AddRotationInput(0, 1.0f, 0);
     WorldObjects[3]->AddRotationInput(0, 0, 1.0f);
+    WorldObjects[2]->AddRotationInput(0, -0.05f, 0);
     WorldObjects[1]->AddMovementInput(0.0f, sin(G_GameTime) * 100.0f, 0.0f);
     WorldPointLights[0]->AddRotationInput(-5.0f, 0.0f, 0.0f);
     WorldPointLights[0]->AddMovementInput(-5.0f, 0.0f, 0.0f);
-    WorldObjects[2]->AddRotationInput(0, 0.05f, 0);
+    //WorldSpotLights[0]->AddRotationInput(5.0f, 5.0f, 5.0f);
 
-    XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationX(30.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
-    XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationY(30.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
-    XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationZ(30.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
-
-    //WorldCameras[0]->LookAtLocation(WorldObjects[1]->WorldMatrix._41, WorldObjects[1]->WorldMatrix._42, WorldObjects[1]->WorldMatrix._43);
+    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationX(30.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
+    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationY(30.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
+    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationZ(30.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
 
     if (Cam->RotateDirLight)
     {
@@ -145,6 +144,7 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
         // Setup Render Targets.
         ID3D11RenderTargetView* TempRTV[] = { RenderTargetView };       // Output manager.
         Context->OMSetRenderTargets(1, TempRTV, ZBufferView);
+        //Context->OMSetBlendState(BlendState, 0, 0xffffffff);
         Context->RSSetViewports(1, &Viewport);                          // This is the Rasterizer.
 
         // Load the Cube object data into the video card.
@@ -191,17 +191,20 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
         cb1.PointLightColors[0] = WorldPointLights[0]->Color;
         cb1.PointLightIntensities = WorldPointLights[0]->Intensity;
         cb1.PointLightPositions[0] = XMFLOAT4(WorldPointLights[0]->WorldMatrix._41, WorldPointLights[0]->WorldMatrix._42, WorldPointLights[0]->WorldMatrix._43, WorldPointLights[0]->WorldMatrix._44);
+        cb1.PointLightColors[1] = WorldPointLights[1]->Color;
+        cb1.PointLightPositions[1] = XMFLOAT4(WorldPointLights[1]->WorldMatrix._41, WorldPointLights[1]->WorldMatrix._42, WorldPointLights[1]->WorldMatrix._43, WorldPointLights[1]->WorldMatrix._44);
         cb1.CameraWorldMatrix = XMLoadFloat4x4(&Cam->SpacialEnvironment.WorldMatrix);
         cb1.BlinnPhongIntensity = 32.0f;
         cb1.WorldTime = G_GameTime;
         cb1.DeltaTime = DeltaTime;
         cb1.DiscoIntensity = WorldObjects[i]->DiscoIntensity;
+        cb1.WavingIntensity = WorldObjects[i]->WavingIntensity;
         cb1.SpotLightColors[0] = WorldSpotLights[0]->Color;
         cb1.SpotLightDirections[0] = XMFLOAT4(WorldSpotLights[0]->WorldMatrix._31, WorldSpotLights[0]->WorldMatrix._22, WorldSpotLights[0]->WorldMatrix._13, WorldSpotLights[0]->WorldMatrix._44);
         cb1.SpotLightPositions[0] = XMFLOAT4(WorldSpotLights[0]->WorldMatrix._41, WorldSpotLights[0]->WorldMatrix._42, WorldSpotLights[0]->WorldMatrix._43, WorldSpotLights[0]->WorldMatrix._44);
         cb1.SpotLightConeRatios = WorldSpotLights[0]->ConeAngle;
         cb1.SpotLightIntensities = WorldSpotLights[0]->Intensity;
-        cb1.WavingIntensity = WorldObjects[0]->WavingIntensity;
+        cb1.EmissiveColor = WorldObjects[i]->EmissiveColor;
 
         // Send data to the graphics card.
         D3D11_MAPPED_SUBRESOURCE GPUBufferCDS;
@@ -219,9 +222,9 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
         Context->VSSetShader(MeshVertexShader, 0, 0);
         Context->VSSetConstantBuffers(0, 1, Constants);
         Context->PSSetShader(PixelShader, 0, 0);                            // Pixel Shader stage.
+        Context->PSSetSamplers(0, 1, &LinearSamplerState);
         Context->PSSetConstantBuffers(0, 1, Constants);
         Context->PSSetShaderResources(0, 1, &WorldObjects[i]->ShaderResourceView);
-        Context->PSSetSamplers(0, 1, &LinearSamplerState);
 
         unsigned int sizer = sizeof(ConstantBuffer);
         unsigned int size = sizeof(cb1);
@@ -243,6 +246,7 @@ void DisplayAgent::ReleaseInterfaces()
     SAFE_RELEASE(PixelShader);
     SAFE_RELEASE(ConstantBuffer);
     SAFE_RELEASE(DiffuseTexture);
+    SAFE_RELEASE(BlendState);
     SAFE_RELEASE(InputLayout);
     SAFE_RELEASE(RenderTargetView);
     SAFE_RELEASE(LinearSamplerState);

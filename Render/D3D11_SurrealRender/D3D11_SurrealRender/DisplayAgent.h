@@ -21,11 +21,12 @@ public:
 		XMFLOAT4 AmbientLightColor;
 		XMFLOAT4 DirectionalLightDirections[1];
 		XMFLOAT4 SpotLightDirections[1];
-		XMFLOAT4 PointLightPositions[1];
+		XMFLOAT4 PointLightPositions[2];
 		XMFLOAT4 SpotLightPositions[1];
 		XMFLOAT4 DirectionalLightColors[1];
-		XMFLOAT4 PointLightColors[1];
+		XMFLOAT4 PointLightColors[2];
 		XMFLOAT4 SpotLightColors[1];
+		XMFLOAT4 EmissiveColor;
 		float SpotLightConeRatios;
 		float SpotLightIntensities;
 		float DirectionalLightIntensities;
@@ -57,6 +58,7 @@ public:
 
 	ID3D11Texture2D* ZBuffer = nullptr;						// Z-Buffer for depth sorting.
 	ID3D11DepthStencilView* ZBufferView = nullptr;
+	ID3D11BlendState* BlendState = nullptr;
 
 	Environment SpacialEnvironment;							// Contains the World, View, and Projection matrices.
 

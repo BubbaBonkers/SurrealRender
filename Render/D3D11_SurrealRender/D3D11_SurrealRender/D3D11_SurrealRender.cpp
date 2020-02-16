@@ -278,6 +278,27 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    MainDisplay->Context->IASetInputLayout(MainDisplay->InputLayout);                         // Input assembler.
 
+   /*
+   D3D11_BLEND_DESC BlendDescState;
+   D3D11_RENDER_TARGET_BLEND_DESC BlendState;
+   ZeroMemory(&BlendState, sizeof(D3D10_BLEND_DESC));
+
+   BlendState.BlendEnable = TRUE;
+   BlendState.SrcBlend = D3D11_BLEND_SRC_ALPHA;
+   BlendState.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+   BlendState.BlendOp = D3D11_BLEND_OP_ADD;
+   BlendState.SrcBlendAlpha = D3D11_BLEND_ZERO;
+   BlendState.DestBlendAlpha = D3D11_BLEND_ZERO;
+   BlendState.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+   BlendState.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+   BlendDescState.AlphaToCoverageEnable = TRUE;
+   BlendDescState.IndependentBlendEnable = TRUE;
+   BlendDescState.RenderTarget[0] = BlendState;
+
+   MainDisplay->Device->CreateBlendState(&BlendDescState, &MainDisplay->BlendState);
+   */
+
    // Create the constant buffer.
    D3D11_BUFFER_DESC BufferDescription;
    ZeroMemory(&BufferDescription, sizeof(BufferDescription));
@@ -317,7 +338,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    MultipleObjectTest->AddRotationInput(-5.0f, 3.0f, 0.0f, true);
 
    // Waving Cube.
-   Object* WavingCube = MainDisplay->CreateObject("TorchTest", "Assets/Planet1.mesh", "Assets/Planet1.dds");
+   Object* WavingCube = MainDisplay->CreateObject("PlanetWave", "Assets/Planet1.mesh", "Assets/Planet1.dds");
    WavingCube->AddMovementInput(1600.0f, 100.0f, -1600.0f, true);
    WavingCube->Scale(2.0f, 2.0f, 2.0f);
    WavingCube->WavingIntensity = 1.0f;
@@ -343,6 +364,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    MainCamera->AddRotationInput(-0.45f, 0.0f, 0.0f, true, true);
    MainCamera->LookAtTarget = MultipleObjectTest;
 
+   // Testing Emmisive Material for Mesh.
+   Object* EmissiveCube = MainDisplay->CreateObject("EmissiveObject", "Assets/cube.mesh", "Assets/Crate.dds");
+   EmissiveCube->EmissiveColor = { 3, 3, 3, 3 };
+   EmissiveCube->AddMovementInput(250.0f, -150.0f, -150.0f, true);
+
    // Directional Light.
    MainDisplay->CreateDirectionalLight("Sunlight", { 1, 1, 1, 1 }, { 1, 1, 1, 1 }, 1.0f);
 
@@ -351,12 +377,14 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    XMStoreFloat4x4(&MainDisplay->WorldPointLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(13.0f, 15.0f, 0.0f), XMLoadFloat4x4(&MainDisplay->WorldPointLights[0]->WorldMatrix)));
 
    // Static Point Light.
-   MainDisplay->CreatePointLight("StaticPointLight", { 1, 1, 1, 1 }, 1.0f);
-   XMStoreFloat4x4(&MainDisplay->WorldPointLights[1]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(10.0f, 5.0f, 3.0f), XMLoadFloat4x4(&MainDisplay->WorldPointLights[1]->WorldMatrix)));
+   MainDisplay->CreatePointLight("StaticPointLight", { 0, 0, 1.0f, 1 }, 1.0f);
+   XMStoreFloat4x4(&MainDisplay->WorldPointLights[1]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(0.0f, -25.0f, -50.0f), XMLoadFloat4x4(&MainDisplay->WorldPointLights[1]->WorldMatrix)));
 
    // SimpleSpot Light Test.
-   MainDisplay->CreateSpotLight("SpotLightTest", { 1, 1, 1, 1 }, 1.0f);
-   XMStoreFloat4x4(&MainDisplay->WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(5.0f, 5.0f, 5.0f), XMLoadFloat4x4(&MainDisplay->WorldSpotLights[0]->WorldMatrix)));
+   MainDisplay->CreateSpotLight("SpotLightTest", { 1, 0, 0, 1 }, 1.0f);
+   XMMATRIX LookNew = XMMatrixLookAtLH({ MainDisplay->WorldSpotLights[0]->WorldMatrix._41, MainDisplay->WorldSpotLights[0]->WorldMatrix._42, MainDisplay->WorldSpotLights[0]->WorldMatrix._43 }, { MainDisplay->WorldObjects[2]->WorldMatrix._41, MainDisplay->WorldObjects[2]->WorldMatrix._42, MainDisplay->WorldObjects[2]->WorldMatrix._43 }, { 0, 1, 0 });
+   XMStoreFloat4x4(&MainDisplay->WorldSpotLights[0]->WorldMatrix, LookNew);
+   //MainDisplay->WorldSpotLights[0]->AddMovementInput(350.0f, -50.0f, 55.0f, true);
 
    return TRUE;
 }
