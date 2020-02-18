@@ -146,6 +146,19 @@ Object* DisplayAgent::CreateObject(const char* DebugName, const char* TextureDDS
     return NewObject;
 }
 
+// Create an object that should be rendered to the UI rather than 3D world geometry.
+Object* DisplayAgent::CreateObject(const char* DebugName, bool bHide)
+{
+    // Create the cube.mesh for testing the object creation.
+    Object* NewObject = new Object();
+    NewObject->RenderAsUI = true;
+    NewObject->CreateObject(DebugName, bHide);             // Create the object and initialize information.
+    WorldInterfaceObjects.push_back(NewObject);
+    NewObject->BeginPlay(this);
+
+    return NewObject;
+}
+
 // Create a new camera, leave AttachTo as "nullptr" to not attach to an object.
 DirectionalLight* DisplayAgent::CreateDirectionalLight(const char* DebugName, XMFLOAT4 direction, XMFLOAT4 color, float intensity)
 {
@@ -186,9 +199,6 @@ void DisplayAgent::ChangeAspectRatio(float InRatio)
 
 void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float DeltaTime)
 {
-    // Assert that the constant buffer remains 16-byte aligned.
-    //static_assert((sizeof(ConstantBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned!");
-
     // Increase global game time.
     G_GameTime += DeltaTime;
 
@@ -207,15 +217,51 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
     WorldPointLights[0]->AddMovementInput(-5.0f, 0.0f, 0.0f);
     //WorldSpotLights[0]->AddRotationInput(0.0f, 0.0f, 5.0f);
 
-    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationX(sin(G_GameTime) * 10.0f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
-    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(0.0f, sin(G_GameTime) * 10.0f * DeltaTime, 0.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
+    // Setup UI stuffs.
+    OffscreenViewportA.Width = 400;
+    OffscreenViewportA.Height = 500;
+    OffscreenViewportA.TopLeftX = 0;
+    OffscreenViewportA.TopLeftY = 0;
+
+    Context->RSSetViewports(1, &OffscreenViewportA);
+
+    for (unsigned int i = 0; i < WorldInterfaceObjects.size(); ++i)
+    {
+        // Setup Render Targets.
+        ID3D11RenderTargetView* TempRTV[] = { RenderTargetView };       // Output manager.
+        Context->OMSetRenderTargets(1, TempRTV, ZBufferView);
+
+        PIP_ConstantBuffer PIP_ConstBuff;
+        PIP_ConstBuff.CameraWorldMatrix = XMLoadFloat4x4(&Cam->SpacialEnvironment.WorldMatrix);
+        PIP_ConstBuff.DeltaTime = DeltaTime;
+        PIP_ConstBuff.WorldTime = G_GameTime;
+
+        // Send data to the graphics card.
+        D3D11_MAPPED_SUBRESOURCE PIP_GPUBuffer;
+        Context->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &PIP_GPUBuffer);
+        memcpy(PIP_GPUBuffer.pData, &PIP_ConstBuff, sizeof(PIP_ConstBuff));
+        Context->Unmap(ConstantBuffer, 0);
+
+        // Apply matrix math in vertex shader and connect the constant buffer to the pipeline.
+        ID3D11Buffer* Constants[] = { ConstantBuffer };
+
+        Context->PSSetShader(PIP_PixelShader, 0, 0);                            // Pixel Shader stage.
+        Context->PSSetSamplers(0, 1, &LinearSamplerState);
+        Context->PSSetConstantBuffers(0, 1, Constants);
+        Context->PSSetShaderResources(0, 1, &WorldInterfaceObjects[i]->ShaderResourceView);
+
+        Context->Draw(100, 0);
+    }
+
+    XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationX(sin(G_GameTime) * 10.0f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
+    XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(0.0f, sin(G_GameTime) * 10.0f * DeltaTime, 0.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
     //WorldSpotLights[0]->AddMovementInput(0.0f, 50.0f, 0.0f);
     //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationY(0.5f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
     //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationZ(0.5f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
 
     if (Cam->RotateDirLight)
     {
-        WorldDirectionalLights[0]->AddRotationInput(2.0f, 3.0f, 1.0f);
+        WorldDirectionalLights[0]->AddRotationInput(0.25f, 3.0f, 0.1f);
     }
 
     for (unsigned int i = 0; i < WorldObjects.size(); ++i)

@@ -39,18 +39,32 @@ public:
 		float WavingIntensity;
 	};
 
+	struct PIP_ConstantBuffer
+	{
+		XMMATRIX CameraWorldMatrix;
+		float WorldTime;
+		float DeltaTime;
+	};
+
 	ID3D11Device*				Device = nullptr;
 	IDXGISwapChain*				SwapChain = nullptr;
 	ID3D11DeviceContext*		Context = nullptr;
 	ID3D11RenderTargetView*		RenderTargetView = nullptr;
+
+	// Viewports.
 	D3D11_VIEWPORT				Viewport;
+	D3D11_VIEWPORT				OffscreenViewportA;
 
 	ID3D11InputLayout*			InputLayout = nullptr;
 	ID3D11PixelShader*			PixelShader = nullptr;		// HLSL
+	ID3D11PixelShader*			PIP_PixelShader = nullptr;		// HLSL
 
 	// Texture variables.
 	ID3D11SamplerState*			LinearSamplerState = nullptr;
+
+	// Textures.
 	ID3D11Texture2D*			DiffuseTexture = nullptr;
+	ID3D11Texture2D*			PIPTexture = nullptr;
 
 	ID3D11VertexShader* MeshVertexShader = nullptr;			// HLSL
 
@@ -64,6 +78,7 @@ public:
 
 	std::vector<Camera*> WorldCameras;
 	std::vector<Object*> WorldObjects;
+	std::vector<Object*> WorldInterfaceObjects;
 	std::vector<DirectionalLight*> WorldDirectionalLights;
 	std::vector<SpotLight*> WorldSpotLights;
 	std::vector<PointLight*> WorldPointLights;
@@ -85,6 +100,9 @@ public:
 	// Create a new object.
 	Object* CreateObject(const char* DebugName, const char* FileName, const char* TextureDDS, bool bHide = false);
 	Object* CreateObject(const char* DebugName, const char* TextureDDS, std::vector<Vertex> VertexData, std::vector<int> IndexData, bool bHide = false);
+
+	// Create an object that should be rendered to the UI rather than 3D world geometry.
+	Object* CreateObject(const char* DebugName, bool bHide = false);
 
 	// Create a new camera, leave AttachTo as "nullptr" to not attach to an object.
 	Camera* CreateCamera(const char* DebugName, Object* AttachTo = nullptr);

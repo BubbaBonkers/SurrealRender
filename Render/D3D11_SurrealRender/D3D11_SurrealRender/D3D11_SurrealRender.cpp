@@ -21,6 +21,7 @@
 //#include "GeneralVertexShaders.csh"
 #include "GeneralPixelShaders.csh"
 #include "GeneralMeshVertexShaders.csh"
+#include "PS_PictureInPicture.csh"
 
 using namespace NRB;
 using namespace DirectX;
@@ -268,6 +269,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    // Write, Compile, and Load the shaders.
    hr = MainDisplay->Device->CreatePixelShader(GeneralPixelShaders, sizeof(GeneralPixelShaders), nullptr, &MainDisplay->PixelShader);
 
+   // Create the shader for PIP.
+   hr = MainDisplay->Device->CreatePixelShader(PS_PictureInPicture, sizeof(PS_PictureInPicture), nullptr, &MainDisplay->PIP_PixelShader);
+
    // Describe it to DirectX.
    D3D11_INPUT_ELEMENT_DESC InputDesc[] =
    {
@@ -332,6 +336,26 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    TextureDesc.MiscFlags = 0;
 
    MainDisplay->Device->CreateTexture2D(&TextureDesc, nullptr, &MainDisplay->DiffuseTexture);
+
+   // Load the picture-in-picture texture into the graphics card.
+   D3D11_TEXTURE2D_DESC PIP_TextureDesc;
+   D3D11_SUBRESOURCE_DATA PIP_TextureSource;
+   ZeroMemory(&PIP_TextureDesc, sizeof(PIP_TextureDesc));
+   ZeroMemory(&PIP_TextureSource, sizeof(PIP_TextureSource));
+
+   PIP_TextureDesc.ArraySize = 1;
+   PIP_TextureDesc.CPUAccessFlags = 0;
+   PIP_TextureDesc.Width = 500;
+   PIP_TextureDesc.Height = 400;
+   PIP_TextureDesc.MipLevels = 0;
+   PIP_TextureDesc.SampleDesc.Count = 1;
+   PIP_TextureDesc.SampleDesc.Quality = 0;
+   PIP_TextureDesc.Usage = D3D11_USAGE_DEFAULT;
+   PIP_TextureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+   PIP_TextureDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+   PIP_TextureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+   MainDisplay->Device->CreateTexture2D(&PIP_TextureDesc, nullptr, &MainDisplay->PIPTexture);
 
    return TRUE;
 }

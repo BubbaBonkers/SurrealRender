@@ -116,6 +116,7 @@ namespace NRB
 		XMFLOAT4 EmissiveColor = { 0, 0, 0, 0 };
 		float DiscoIntensity = 0.0f;
 		float WavingIntensity = 0.0f;
+		bool RenderAsUI = false;												// Set to true to indicate that this object should be drawn as a UI element.
 		D3D_PRIMITIVE_TOPOLOGY TopologyType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
 	private:
@@ -166,6 +167,9 @@ namespace NRB
 		// Same as CreateObject base, but this one takes a File Name for the mesh to load into the object.
 		void CreateObject(const char* DebugName, const char* FileName, const char* TextureDDS, bool Hide = false);
 
+		// Create an object that should be rendered to the UI rather than 3D world geometry.
+		void CreateObject(const char* DebugName, bool Hide = false);
+
 		// Load mesh information such as Texture, Vertices, Indices, and UVs onto this object using a .mesh object file as MeshFileName.
 		void LoadMesh(const char* MeshFileName);
 
@@ -192,7 +196,7 @@ namespace NRB
 
 		// Camera physical attributes.
 		float CameraMovementSpeed = 8.0f;									// Speed of camera movement in 3D space.
-		float CameraRotationSpeed = 7.0f;									// Rate at which the camera rotates when you look around.
+		float CameraRotationSpeed = 5.0f;									// Rate at which the camera rotates when you look around.
 
 		// Temp variables for testing features.
 		bool RotateDirLight = false;
