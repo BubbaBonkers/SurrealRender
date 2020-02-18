@@ -68,7 +68,6 @@ XMFLOAT4X4 SpotLight::AddRotationInput(float Pitch, float Yaw, float Roll, bool 
 		Multiplier = TickTime;
 	}
 
-	// Rotate the object in 3D space.
 	XMMATRIX RotateIt = XMMatrixRotationRollPitchYaw((Pitch * Multiplier), (Yaw * Multiplier), (Roll * Multiplier));
 	XMStoreFloat4x4(&WorldMatrix, (XMMatrixMultiply(RotateIt, XMLoadFloat4x4(&WorldMatrix))));
 

@@ -82,6 +82,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     // Start internal timer.
     Clock.Start();
 
+    MainDisplay->StartPlay();
+
     // Main message loop:
     while (true)
     {
@@ -330,61 +332,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    TextureDesc.MiscFlags = 0;
 
    MainDisplay->Device->CreateTexture2D(&TextureDesc, nullptr, &MainDisplay->DiffuseTexture);
-
-   // Simple Testing Cube.
-   Object* CubeTest = MainDisplay->CreateObject("TestingCube", "Assets/cube.mesh", "Assets/Crate.dds");
-   Object* MultipleObjectTest = MainDisplay->CreateObject("SecondCube", "Assets/FancyBox.mesh", "Assets/FancyBoxDDS.dds");
-   MultipleObjectTest->AddMovementInput(300.0f, -50.0f, 55.0f, true);
-   MultipleObjectTest->AddRotationInput(-5.0f, 3.0f, 0.0f, true);
-
-   // Waving Cube.
-   Object* WavingCube = MainDisplay->CreateObject("PlanetWave", "Assets/Planet1.mesh", "Assets/Planet1.dds");
-   WavingCube->AddMovementInput(1600.0f, 100.0f, -1600.0f, true);
-   WavingCube->Scale(2.0f, 2.0f, 2.0f);
-   WavingCube->WavingIntensity = 1.0f;
-
-   // Disco Cube.
-   Object* StaticSinWaveCube = MainDisplay->CreateObject("TestingCubeWave", "Assets/cube.mesh", "Assets/Crate.dds");
-   StaticSinWaveCube->DiscoIntensity = 1.0f;
-   StaticSinWaveCube->AddMovementInput(-300.0f, 110.0f, -250.0f, true);
-
-   // Testing Torch Mesh.
-   Object* Torch = MainDisplay->CreateObject("TorchTest", "Assets/Torch.mesh", "Assets/TorchTexture.dds");
-   Torch->Scale(30.0f, 30.0f, 30.0f);
-   Torch->AddMovementInput(-250.0f, 150.0f, 150.0f, true);
-
-   // Testing Bamboo Mesh.
-   Object* Bamboo = MainDisplay->CreateObject("Bamboo", "Assets/Bamboo.mesh", "Assets/BambooT.dds");
-   Bamboo->Scale(30.0f, 30.0f, 30.0f);
-   Bamboo->AddMovementInput(250.0f, 50.0f, -150.0f, true);
-
-   // Camera Acting as Eyes.
-   Camera* MainCamera = MainDisplay->CreateCamera("Eyes");
-   MainCamera->AddMovementInput(0, 3.0f, -5.0f);
-   MainCamera->AddRotationInput(-0.45f, 0.0f, 0.0f, true, true);
-   MainCamera->LookAtTarget = MultipleObjectTest;
-
-   // Testing Emmisive Material for Mesh.
-   Object* EmissiveCube = MainDisplay->CreateObject("EmissiveObject", "Assets/cube.mesh", "Assets/Crate.dds");
-   EmissiveCube->EmissiveColor = { 3, 3, 3, 3 };
-   EmissiveCube->AddMovementInput(250.0f, -150.0f, -150.0f, true);
-
-   // Directional Light.
-   MainDisplay->CreateDirectionalLight("Sunlight", { 1, 1, 1, 1 }, { 1, 1, 1, 1 }, 1.0f);
-
-   // Dynamic Point Light.
-   MainDisplay->CreatePointLight("PointLightTest", { 0, 1, 1, 1 }, 1.0f);
-   XMStoreFloat4x4(&MainDisplay->WorldPointLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(13.0f, 15.0f, 0.0f), XMLoadFloat4x4(&MainDisplay->WorldPointLights[0]->WorldMatrix)));
-
-   // Static Point Light.
-   MainDisplay->CreatePointLight("StaticPointLight", { 0, 0, 1.0f, 1 }, 1.0f);
-   XMStoreFloat4x4(&MainDisplay->WorldPointLights[1]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(0.0f, -25.0f, -50.0f), XMLoadFloat4x4(&MainDisplay->WorldPointLights[1]->WorldMatrix)));
-
-   // SimpleSpot Light Test.
-   MainDisplay->CreateSpotLight("SpotLightTest", { 1, 0, 0, 1 }, 1.0f);
-   XMMATRIX LookNew = XMMatrixLookAtLH({ MainDisplay->WorldSpotLights[0]->WorldMatrix._41, MainDisplay->WorldSpotLights[0]->WorldMatrix._42, MainDisplay->WorldSpotLights[0]->WorldMatrix._43 }, { MainDisplay->WorldObjects[2]->WorldMatrix._41, MainDisplay->WorldObjects[2]->WorldMatrix._42, MainDisplay->WorldObjects[2]->WorldMatrix._43 }, { 0, 1, 0 });
-   XMStoreFloat4x4(&MainDisplay->WorldSpotLights[0]->WorldMatrix, LookNew);
-   //MainDisplay->WorldSpotLights[0]->AddMovementInput(350.0f, -50.0f, 55.0f, true);
 
    return TRUE;
 }

@@ -51,7 +51,7 @@ VS_OUTPUT main(VS_INPUT Input)
 
 	// Get the matrices to match up with object position.
 	Output.Position = mul(WorldMatrix, Output.Position);
-	Output.Wposition = mul(WorldMatrix, Output.Position);
+    Output.Wposition = Output.Position;
 	Output.Position = mul(ViewMatrix, Output.Position);
 	Output.Position = mul(ProjectionMatrix, Output.Position);
     

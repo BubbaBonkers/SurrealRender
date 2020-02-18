@@ -5,6 +5,83 @@
 #define SAFE_RELEASE(ptr) { if(ptr) { ptr->Release(); ptr = nullptr; } }
 #define D3DXToRadian(degree) ((degree) * (D3DX_PI / 180.0f))
 
+// Called when this object is first created. (Game Start)
+void DisplayAgent::StartPlay()
+{
+    // Simple Testing Cube.
+    Object* CubeTest = CreateObject("TestingCube", "Assets/cube.mesh", "Assets/Crate.dds");
+    Object* MultipleObjectTest = CreateObject("SecondCube", "Assets/FancyBox.mesh", "Assets/FancyBoxDDS.dds");
+    MultipleObjectTest->AddMovementInput(300.0f, -50.0f, 55.0f, true);
+    MultipleObjectTest->AddRotationInput(-5.0f, 3.0f, 0.0f, true);
+
+    // Waving Cube.
+    Object* WavingCube = CreateObject("PlanetWave", "Assets/Planet1.mesh", "Assets/Planet1.dds");
+    WavingCube->EmissiveColor = { 1.0f, 0.2f, 0, 1.0f };
+    WavingCube->AddMovementInput(2000.0f, 100.0f, -2000.0f, true);
+    WavingCube->Scale(3.0f, 3.0f, 3.0f);
+    WavingCube->WavingIntensity = 1.0f;
+
+    // Disco Cube.
+    Object* StaticSinWaveCube = CreateObject("TestingCubeWave", "Assets/cube.mesh", "Assets/Crate.dds");
+    StaticSinWaveCube->DiscoIntensity = 1.0f;
+    StaticSinWaveCube->AddMovementInput(-300.0f, 110.0f, -250.0f, true);
+
+    // Testing Torch Mesh.
+    Object* Torch = CreateObject("TorchTest", "Assets/Torch.mesh", "Assets/TorchTexture.dds");
+    Torch->Scale(30.0f, 30.0f, 30.0f);
+    Torch->AddMovementInput(-250.0f, 150.0f, 150.0f, true);
+
+    // Testing Bamboo Mesh.
+    Object* Bamboo = CreateObject("Bamboo", "Assets/Bamboo.mesh", "Assets/BambooT.dds");
+    Bamboo->Scale(30.0f, 30.0f, 30.0f);
+    Bamboo->AddMovementInput(250.0f, 50.0f, -150.0f, true);
+
+    // Testing Bamboo Mesh for Alpha Emissive Light.
+    Object* EmissiveBamboo = CreateObject("Bamboo", "Assets/Bamboo.mesh", "Assets/BambooT.dds");
+    EmissiveBamboo->EmissiveColor = { 3, 3, 3, 3 };
+    EmissiveBamboo->Scale(30.0f, 30.0f, 30.0f);
+    EmissiveBamboo->AddMovementInput(250.0f, 50.0f, -150.0f, true);
+    EmissiveBamboo->AddRotationInput(0, 15.0f, 0, true);
+
+    // Testing Emmisive Material for Mesh.
+    Object* EmissiveCube = CreateObject("EmissiveObject", "Assets/cube.mesh", "Assets/Crate.dds");
+    EmissiveCube->EmissiveColor = { 3, 3, 3, 3 };
+    EmissiveCube->AddMovementInput(250.0f, -150.0f, -150.0f, true);
+
+    // Simple Wall.
+    Object* WallTest = CreateObject("TestingWall", "Assets/cube.mesh", "Assets/Crate.dds");
+    WallTest->Scale(10.0f, 10.0f, 1.0f);
+    WallTest->AddMovementInput(400.0f, -250.0f, 500.0f, true);
+
+    Object* Origin = CreateObject("TestingCube", "Assets/cube.mesh", "Assets/Crate.dds");
+    //Origin->AddMovementInput(0.0f, 10.0f, 0.0f);
+    Origin->Scale(0.5f, 0.5f, 0.5f);
+
+    // Camera Acting as Eyes.
+    Camera* MainCamera = CreateCamera("Eyes");
+    MainCamera->AddMovementInput(0, 3.0f, -5.0f);
+    MainCamera->AddRotationInput(-0.45f, 0.0f, 0.0f, true, true);
+    MainCamera->LookAtTarget = MultipleObjectTest;
+
+    // Directional Light.
+    CreateDirectionalLight("Sunlight", { 1, 1, 1, 1 }, { 1, 1, 1, 1 }, 1.0f);
+
+    // Dynamic Point Light.
+    CreatePointLight("PointLightTest", { 0, 1, 1, 1 }, 1.0f);
+    XMStoreFloat4x4(&WorldPointLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(13.0f, 15.0f, 0.0f), XMLoadFloat4x4(&WorldPointLights[0]->WorldMatrix)));
+
+    // Static Point Light.
+    CreatePointLight("StaticPointLight", { 0, 0, 1.0f, 1 }, 0.0f);
+    XMStoreFloat4x4(&WorldPointLights[1]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(0.0f, -25.0f, -50.0f), XMLoadFloat4x4(&WorldPointLights[1]->WorldMatrix)));
+
+    // SimpleSpot Light Test.
+    CreateSpotLight("SpotLightTest", { 1, 0, 0, 1 }, 1.0f);
+    //WorldSpotLights[0]->AddMovementInput(250.0f, 50.0f, -150.0f, true);
+    WorldSpotLights[0]->AddRotationInput(0.0f, -90.0f, 0.0f, true);
+    //XMMATRIX LookNew = XMMatrixLookAtLH({ WorldSpotLights[0]->WorldMatrix._41, WorldSpotLights[0]->WorldMatrix._42, WorldSpotLights[0]->WorldMatrix._43 }, { WorldObjects[2]->WorldMatrix._41, WorldObjects[2]->WorldMatrix._42, WorldObjects[2]->WorldMatrix._43 }, { 0, 1, 0 });
+    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, LookNew);
+}
+
 // Called every frame.
 void DisplayAgent::Update(float DeltaTime)
 {
@@ -127,12 +204,15 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
     WorldObjects[2]->AddRotationInput(0, -0.05f, 0);
     WorldObjects[1]->AddMovementInput(0.0f, sin(G_GameTime) * 100.0f, 0.0f);
     WorldPointLights[0]->AddRotationInput(-5.0f, 0.0f, 0.0f);
+    //WorldSpotLights[0]->AddRotationInput(0.0f, 0.5f, 0.0f);
     WorldPointLights[0]->AddMovementInput(-5.0f, 0.0f, 0.0f);
-    //WorldSpotLights[0]->AddRotationInput(5.0f, 5.0f, 5.0f);
+    WorldSpotLights[0]->AddRotationInput(0.0f, 0.0f, 5.0f);
 
-    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationX(30.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
-    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationY(30.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
-    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationZ(30.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
+    XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationX(sin(G_GameTime) * 10.0f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
+    XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(0.0f, sin(G_GameTime) * 10.0f * DeltaTime, 0.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
+    WorldSpotLights[0]->AddMovementInput(0.0f, 50.0f, 0.0f);
+    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationY(0.5f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
+    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationZ(0.5f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
 
     if (Cam->RotateDirLight)
     {
@@ -194,7 +274,7 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
         cb1.PointLightColors[1] = WorldPointLights[1]->Color;
         cb1.PointLightPositions[1] = XMFLOAT4(WorldPointLights[1]->WorldMatrix._41, WorldPointLights[1]->WorldMatrix._42, WorldPointLights[1]->WorldMatrix._43, WorldPointLights[1]->WorldMatrix._44);
         cb1.CameraWorldMatrix = XMLoadFloat4x4(&Cam->SpacialEnvironment.WorldMatrix);
-        cb1.BlinnPhongIntensity = 32.0f;
+        cb1.BlinnPhongIntensity = 16.0f;
         cb1.WorldTime = G_GameTime;
         cb1.DeltaTime = DeltaTime;
         cb1.DiscoIntensity = WorldObjects[i]->DiscoIntensity;
@@ -202,7 +282,7 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
         cb1.SpotLightColors[0] = WorldSpotLights[0]->Color;
         cb1.SpotLightDirections[0] = XMFLOAT4(WorldSpotLights[0]->WorldMatrix._31, WorldSpotLights[0]->WorldMatrix._22, WorldSpotLights[0]->WorldMatrix._13, WorldSpotLights[0]->WorldMatrix._44);
         cb1.SpotLightPositions[0] = XMFLOAT4(WorldSpotLights[0]->WorldMatrix._41, WorldSpotLights[0]->WorldMatrix._42, WorldSpotLights[0]->WorldMatrix._43, WorldSpotLights[0]->WorldMatrix._44);
-        cb1.SpotLightConeRatios = WorldSpotLights[0]->ConeAngle;
+        cb1.SpotLightConeRatios = WorldSpotLights[0]->ConeRatio;
         cb1.SpotLightIntensities = WorldSpotLights[0]->Intensity;
         cb1.EmissiveColor = WorldObjects[i]->EmissiveColor;
 

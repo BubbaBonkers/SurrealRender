@@ -94,6 +94,9 @@ public:
 	SpotLight* CreateSpotLight(const char* DebugName, XMFLOAT4 color = { 1, 1, 1, 1 }, float intensity = 1.0f);
 	PointLight* CreatePointLight(const char* DebugName, XMFLOAT4 color = { 1, 1, 1, 1 }, float intensity = 1.0f);
 
+	// Called when this object is first created. (Game Start)
+	void StartPlay();
+
 	// Called every frame.
 	void Update(float DeltaTime);
 	void ChangeAspectRatio(float InRatio);
