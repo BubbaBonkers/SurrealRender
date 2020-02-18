@@ -51,7 +51,7 @@ void DisplayAgent::StartPlay()
     // Simple Wall.
     Object* WallTest = CreateObject("TestingWall", "Assets/cube.mesh", "Assets/Crate.dds");
     WallTest->Scale(10.0f, 10.0f, 1.0f);
-    WallTest->AddMovementInput(400.0f, -250.0f, 500.0f, true);
+    WallTest->AddMovementInput(400.0f, -250.0f, 600.0f, true);
 
     Object* Origin = CreateObject("TestingCube", "Assets/cube.mesh", "Assets/Crate.dds");
     //Origin->AddMovementInput(0.0f, 10.0f, 0.0f);
@@ -78,7 +78,7 @@ void DisplayAgent::StartPlay()
     CreateSpotLight("SpotLightTest", { 1, 0, 0, 1 }, 1.0f);
     //WorldSpotLights[0]->AddMovementInput(250.0f, 50.0f, -150.0f, true);
     WorldSpotLights[0]->AddRotationInput(0.0f, -90.0f, 0.0f, true);
-    //XMMATRIX LookNew = XMMatrixLookAtLH({ WorldSpotLights[0]->WorldMatrix._41, WorldSpotLights[0]->WorldMatrix._42, WorldSpotLights[0]->WorldMatrix._43 }, { WorldObjects[2]->WorldMatrix._41, WorldObjects[2]->WorldMatrix._42, WorldObjects[2]->WorldMatrix._43 }, { 0, 1, 0 });
+    XMMATRIX LookNew = XMMatrixLookAtLH({ WorldSpotLights[0]->WorldMatrix._41, WorldSpotLights[0]->WorldMatrix._42, WorldSpotLights[0]->WorldMatrix._43 }, { WorldObjects[8]->WorldMatrix._41, WorldObjects[8]->WorldMatrix._42, WorldObjects[8]->WorldMatrix._43 }, { 0, 1, 0 });
     //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, LookNew);
 }
 
@@ -204,13 +204,12 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
     WorldObjects[2]->AddRotationInput(0, -0.05f, 0);
     WorldObjects[1]->AddMovementInput(0.0f, sin(G_GameTime) * 100.0f, 0.0f);
     WorldPointLights[0]->AddRotationInput(-5.0f, 0.0f, 0.0f);
-    //WorldSpotLights[0]->AddRotationInput(0.0f, 0.5f, 0.0f);
     WorldPointLights[0]->AddMovementInput(-5.0f, 0.0f, 0.0f);
-    WorldSpotLights[0]->AddRotationInput(0.0f, 0.0f, 5.0f);
+    //WorldSpotLights[0]->AddRotationInput(0.0f, 0.0f, 5.0f);
 
-    XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationX(sin(G_GameTime) * 10.0f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
-    XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(0.0f, sin(G_GameTime) * 10.0f * DeltaTime, 0.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
-    WorldSpotLights[0]->AddMovementInput(0.0f, 50.0f, 0.0f);
+    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationX(sin(G_GameTime) * 10.0f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
+    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(0.0f, sin(G_GameTime) * 10.0f * DeltaTime, 0.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
+    //WorldSpotLights[0]->AddMovementInput(0.0f, 50.0f, 0.0f);
     //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationY(0.5f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
     //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationZ(0.5f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
 

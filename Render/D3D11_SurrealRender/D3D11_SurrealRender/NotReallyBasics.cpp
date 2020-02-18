@@ -497,6 +497,19 @@ void NRB::Camera::Update(float DeltaTime)
 				LookAtLocation(LookAtTarget->WorldMatrix._41, LookAtTarget->WorldMatrix._42, LookAtTarget->WorldMatrix._43);
 			}
 		}
+
+		if (GetKeyState(VK_TAB) & 0x80)
+		{
+			// Move forward, backward, and side to side.
+			if (GetKeyState('W') & 0x8000)
+			{
+				AddMovementInput(0, 0, (CameraMovementSpeed * DeltaTime), true);
+			}
+			if (GetKeyState('S') & 0x8000)
+			{
+				AddMovementInput(0, 0, -(CameraMovementSpeed * DeltaTime), true);
+			}
+		}
 	}
 
 	// Field of view controls.
