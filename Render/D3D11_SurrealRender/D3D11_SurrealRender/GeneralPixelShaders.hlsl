@@ -42,7 +42,6 @@ float4 main(VS_OUTPUT InputPixel) : SV_TARGET
 	float4 FinalColor = txDiffuse.Sample(samLinear, InputPixel.Texture);
     if(FinalColor.a < 0.2f)
         discard;
-    //FinalColor.a = 1;
     
     float4 E_Final = EmissiveColor * FinalColor.a;
     
@@ -54,12 +53,16 @@ float4 main(VS_OUTPUT InputPixel) : SV_TARGET
 	float4 D_Result = D_LightRatio * DirectionalLightColors[0];
 	
 	// Get the spot lights.
-    float SL_LightDir = normalize(SpotLightPositions[0].xyz - InputPixel.Wposition.xyz);
-    float SL_SurfaceRatio = saturate(dot(-SL_LightDir, SpotLightDirections[0].xyz));
-    float SL_LightRatio = saturate(saturate(dot(SL_LightDir, InputPixel.Normal)) * SpotLightIntensities);
-    float SL_Attenuation = 1.0f - saturate((0.9f - SL_SurfaceRatio) / (0.9f - 0.8f)); // CosInnerCone (.9) - surfaceRatio / cosineInerCone - inputPixel.light[i].cosineOuterCone (.8)
-    float4 SL_Result = saturate(saturate(SpotLightColors[0] * SL_LightRatio) * (SL_Attenuation * SL_Attenuation));
+    float3 SL_LightDir = normalize(SpotLightPositions[0].xyz - InputPixel.Wposition.xyz);
+    float SL_SurfaceRatio = saturate(dot(-SL_LightDir, normalize(SpotLightDirections[0].xyz)));
+    float SL_LightRatio = saturate(dot(SL_LightDir, InputPixel.Normal));// * SpotLightIntensities;
+    float4 SL_Result = SpotLightColors[0] * SL_LightRatio;
 	
+    float SL_Attenuation = 1.0f - saturate((0.9f - SL_SurfaceRatio) / (0.9f - 0.8f)); // CosInnerCone (.9) - surfaceRatio / cosineInerCone - inputPixel.light[i].cosineOuterCone (.8)
+    SL_Attenuation = SL_Attenuation * SL_Attenuation;// * SpotLightIntensities;
+    
+    SL_Result *= SL_Attenuation;
+    
     float4 P_Result = { 0, 0, 0, 0 };
     for (uint i = 0; i < 2; ++i)
     {
@@ -77,18 +80,14 @@ float4 main(VS_OUTPUT InputPixel) : SV_TARGET
     float3 S_HalfVector = normalize((DirectionalLightDirections[0].xyz) + S_ViewDir);
     float3 S_Intensity = max(pow(clamp(dot(InputPixel.Normal, normalize(S_HalfVector)), 0, 1), BlinnPhongIntensity), 0);
     float4 S_Result = DirectionalLightColors[0] * float4(1, 1, 1, 1) * float4(S_Intensity, 1);
-    /*float3 S_LightVector = normalize(InputPixel.Position.xyz - PointLightPositions[0].xyz);
-    float S_Reflect = reflect(InputPixel.Normal, S_LightVector);
-    float S_ToCam = normalize(float3(CameraWorldMatrix._41, CameraWorldMatrix._42, CameraWorldMatrix._43) - InputPixel.Wposition.xyz);
-    float S_SpecDot = saturate(dot(S_Reflect, S_ToCam));
-    S_SpecDot = pow(S_SpecDot, BlinnPhongIntensity);
-    float4 S_SpecColor = float4(1, 1, 1, 1) * float4(1, 1, 1, 1) * S_SpecDot;*/
 	
 	// Wave based on position, time, and sin/cos/tan.
     float4 W_Color = (cos(WorldTime) + (sin(WorldTime * float4(InputPixel.Wposition, 1)) * float4(1, 1, 1, 1))) * DiscoIntensity;
+    W_Color.w = 1.0f;
 	
 	// Add the ambient lighting to the object.
     FinalColor = ((E_Final + D_Result + Ambient + P_Result + S_Result + SL_Result + W_Color) * FinalColor); //    +S_SpecColor); // * FinalColor;
+    //FinalColor = SL_Result * FinalColor;
 
 	// Next do diffuse.
 	

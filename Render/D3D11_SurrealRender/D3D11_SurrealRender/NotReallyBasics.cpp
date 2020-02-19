@@ -265,20 +265,6 @@ void NRB::Object::CreateObject(const char* DebugName, const char* FileName, cons
 	XMStoreFloat4x4(&WorldMatrix, XMMatrixIdentity());
 }
 
-// Create an object that should be rendered to the UI rather than 3D world geometry.
-void NRB::Object::CreateObject(const char* DebugName, bool Hide)
-{
-	// Set basic information about this object.
-	Name = DebugName;
-	bIsVisible = !Hide;
-
-	// Setup texture information.
-	TextureFilepath = "";
-
-	// Setup spacial cognition.
-	XMStoreFloat4x4(&WorldMatrix, XMMatrixIdentity());
-}
-
 // Load mesh information such as Texture, Vertices, Indices, and UVs onto this object using a .mesh object file as MeshFileName.
 void NRB::Object::LoadMesh(const char* MeshFileName)
 {

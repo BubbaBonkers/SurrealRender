@@ -211,6 +211,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Bamboo.mesh" />
+    <None Include="Assets\BambooB.mesh" />
     <None Include="Assets\cube.mesh" />
     <None Include="Assets\FancyBox.mesh" />
     <None Include="Assets\Planet1.mesh" />

@@ -200,7 +200,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    Swap.BufferDesc.Width = WindowRectangle.right - WindowRectangle.left;
    Swap.BufferDesc.Height = WindowRectangle.bottom - WindowRectangle.top;
    Swap.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-   Swap.SampleDesc.Count = 8;
+   Swap.SampleDesc.Count = 1;
    Swap.SampleDesc.Quality = 0;
 
    // Set aspect ratio for world and cameras.
@@ -216,10 +216,10 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    hr = D3D11CreateDeviceAndSwapChain(  nullptr, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_DEBUG, 
                                         &dx11, 1, D3D11_SDK_VERSION, &Swap, &MainDisplay->SwapChain, &MainDisplay->Device, 0, &MainDisplay->Context);
 
-   ID3D11Resource* BackBuffer = nullptr;                                                                          // Create the Back Buffer resource in DirectX.
-   hr = MainDisplay->SwapChain->GetBuffer(0, __uuidof(BackBuffer), (void**)&BackBuffer);                 // Get the Buffer through the Swap Chain.
-   hr = MainDisplay->Device->CreateRenderTargetView(BackBuffer, NULL, &MainDisplay->RenderTargetView);    // Create the RenterTargetView for the Device.
-   BackBuffer->Release();                                                                               // Remove one from the internal count of the Device.
+   ID3D11Resource* BackBuffer = nullptr;                                                                    // Create the Back Buffer resource in DirectX.
+   hr = MainDisplay->SwapChain->GetBuffer(0, __uuidof(BackBuffer), (void**)&BackBuffer);                    // Get the Buffer through the Swap Chain.
+   hr = MainDisplay->Device->CreateRenderTargetView(BackBuffer, NULL, &MainDisplay->RenderTargetView);      // Create the RenterTargetView for the Device.
+   BackBuffer->Release();                                                                                   // Remove one from the internal count of the Device.
 
    // Create Z-Buffer and View. Multisampling/Antialiasing can be done here.
    D3D11_TEXTURE2D_DESC ZDesc;
@@ -232,7 +232,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    ZDesc.Usage = D3D11_USAGE_DEFAULT;
    ZDesc.CPUAccessFlags = 0;
    ZDesc.MipLevels = 1;
-   ZDesc.SampleDesc.Count = 8;
+   ZDesc.SampleDesc.Count = 1;
    ZDesc.SampleDesc.Quality = 0;
    hr = MainDisplay->Device->CreateTexture2D(&ZDesc, nullptr, &MainDisplay->ZBuffer);
 
@@ -284,10 +284,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    MainDisplay->Context->IASetInputLayout(MainDisplay->InputLayout);                         // Input assembler.
 
-   /*
    D3D11_BLEND_DESC BlendDescState;
    D3D11_RENDER_TARGET_BLEND_DESC BlendState;
-   ZeroMemory(&BlendState, sizeof(D3D10_BLEND_DESC));
+   ZeroMemory(&BlendDescState, sizeof(D3D11_BLEND_DESC));
 
    BlendState.BlendEnable = TRUE;
    BlendState.SrcBlend = D3D11_BLEND_SRC_ALPHA;
@@ -303,7 +302,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    BlendDescState.RenderTarget[0] = BlendState;
 
    MainDisplay->Device->CreateBlendState(&BlendDescState, &MainDisplay->BlendState);
-   */
 
    // Create the constant buffer.
    D3D11_BUFFER_DESC BufferDescription;
@@ -335,7 +333,29 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    TextureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
    TextureDesc.MiscFlags = 0;
 
-   MainDisplay->Device->CreateTexture2D(&TextureDesc, nullptr, &MainDisplay->DiffuseTexture);
+   hr = MainDisplay->Device->CreateTexture2D(&TextureDesc, nullptr, &MainDisplay->DiffuseTexture);
+
+   // Create Z-Buffer and View. Multisampling/Antialiasing can be done here.
+   D3D11_TEXTURE2D_DESC PIP_ZDesc;
+   ZeroMemory(&PIP_ZDesc, sizeof(PIP_ZDesc));
+   PIP_ZDesc.ArraySize = 1;
+   PIP_ZDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+   PIP_ZDesc.Width = 500;
+   PIP_ZDesc.Height = 400;
+   PIP_ZDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+   PIP_ZDesc.Usage = D3D11_USAGE_DEFAULT;
+   PIP_ZDesc.CPUAccessFlags = 0;
+   PIP_ZDesc.MipLevels = 1;
+   PIP_ZDesc.SampleDesc.Count = 1;
+   PIP_ZDesc.SampleDesc.Quality = 0;
+   hr = MainDisplay->Device->CreateTexture2D(&PIP_ZDesc, nullptr, &MainDisplay->PIP_ZBuffer);
+
+   // Create the depth stencil view
+   D3D11_DEPTH_STENCIL_VIEW_DESC PIP_descDSV = {};
+   descDSV.Format = PIP_ZDesc.Format;
+   descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+   descDSV.Texture2D.MipSlice = 0;
+   MainDisplay->Device->CreateDepthStencilView(MainDisplay->PIP_ZBuffer, nullptr, &MainDisplay->PIP_ZBufferView);
 
    // Load the picture-in-picture texture into the graphics card.
    D3D11_TEXTURE2D_DESC PIP_TextureDesc;
@@ -355,7 +375,16 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    PIP_TextureDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
    PIP_TextureDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
-   MainDisplay->Device->CreateTexture2D(&PIP_TextureDesc, nullptr, &MainDisplay->PIPTexture);
+   hr = MainDisplay->Device->CreateTexture2D(&PIP_TextureDesc, nullptr, &MainDisplay->PIPTexture);
+
+   hr = MainDisplay->Device->CreateRenderTargetView(MainDisplay->PIPTexture, NULL, &MainDisplay->PIP_RenderTargetView);       // Create the RenterTargetView for the Device.
+
+   D3D11_SHADER_RESOURCE_VIEW_DESC SRVD;
+   SRVD.Texture2D.MipLevels = 1;
+   SRVD.Texture2D.MostDetailedMip = 0;
+   SRVD.Format = PIP_TextureDesc.Format;
+   SRVD.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+   hr = MainDisplay->Device->CreateShaderResourceView(MainDisplay->PIPTexture, &SRVD, &MainDisplay->PIP_ShaderResourceView);
 
    return TRUE;
 }

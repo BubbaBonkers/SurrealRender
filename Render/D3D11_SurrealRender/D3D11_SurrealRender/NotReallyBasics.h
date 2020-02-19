@@ -167,9 +167,6 @@ namespace NRB
 		// Same as CreateObject base, but this one takes a File Name for the mesh to load into the object.
 		void CreateObject(const char* DebugName, const char* FileName, const char* TextureDDS, bool Hide = false);
 
-		// Create an object that should be rendered to the UI rather than 3D world geometry.
-		void CreateObject(const char* DebugName, bool Hide = false);
-
 		// Load mesh information such as Texture, Vertices, Indices, and UVs onto this object using a .mesh object file as MeshFileName.
 		void LoadMesh(const char* MeshFileName);
 

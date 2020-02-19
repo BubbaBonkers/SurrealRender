@@ -50,6 +50,7 @@ public:
 	IDXGISwapChain*				SwapChain = nullptr;
 	ID3D11DeviceContext*		Context = nullptr;
 	ID3D11RenderTargetView*		RenderTargetView = nullptr;
+	ID3D11RenderTargetView*		PIP_RenderTargetView = nullptr;
 
 	// Viewports.
 	D3D11_VIEWPORT				Viewport;
@@ -66,12 +67,19 @@ public:
 	ID3D11Texture2D*			DiffuseTexture = nullptr;
 	ID3D11Texture2D*			PIPTexture = nullptr;
 
+	// PIP Shader Resource View.
+	ID3D11ShaderResourceView* PIP_ShaderResourceView = nullptr;
+
 	ID3D11VertexShader* MeshVertexShader = nullptr;			// HLSL
 
 	ID3D11Buffer* ConstantBuffer = nullptr;					// Stores shaders to send to the video card.
 
 	ID3D11Texture2D* ZBuffer = nullptr;						// Z-Buffer for depth sorting.
 	ID3D11DepthStencilView* ZBufferView = nullptr;
+
+	ID3D11Texture2D* PIP_ZBuffer = nullptr;						// Z-Buffer for depth sorting.
+	ID3D11DepthStencilView* PIP_ZBufferView = nullptr;
+
 	ID3D11BlendState* BlendState = nullptr;
 
 	Environment SpacialEnvironment;							// Contains the World, View, and Projection matrices.
@@ -98,11 +106,8 @@ public:
 	void PresentFromRenderTarget(Camera* Cam, Object* Obj, float DeltaTime = 1.0f);
 
 	// Create a new object.
-	Object* CreateObject(const char* DebugName, const char* FileName, const char* TextureDDS, bool bHide = false);
-	Object* CreateObject(const char* DebugName, const char* TextureDDS, std::vector<Vertex> VertexData, std::vector<int> IndexData, bool bHide = false);
-
-	// Create an object that should be rendered to the UI rather than 3D world geometry.
-	Object* CreateObject(const char* DebugName, bool bHide = false);
+	Object* CreateObject(const char* DebugName, const char* FileName, const char* TextureDDS, bool bHide = false, bool RenderInUI = false);
+	Object* CreateObject(const char* DebugName, const char* TextureDDS, std::vector<Vertex> VertexData, std::vector<int> IndexData, bool bHide = false, bool RenderInUI = false);
 
 	// Create a new camera, leave AttachTo as "nullptr" to not attach to an object.
 	Camera* CreateCamera(const char* DebugName, Object* AttachTo = nullptr);

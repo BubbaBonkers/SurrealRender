@@ -1,3 +1,5 @@
+Texture2D txDiffuse : register(t0);
+
 struct VS_INPUT
 {
     float3 Position : POSITION;
@@ -22,8 +24,7 @@ cbuffer ConstantBuffer : register(b0) // b for Buffer, and 0 for slot 0 in GPU.
 
 float4 main(VS_INPUT Input) : SV_TARGET
 {
-    VS_OUTPUT Output;
-    Output.Position.w = 1.0f;
+    float4 FinalColor = float4(0, 0, 0, 1);
     
     return float4(0, 0, 0, 1.0f);
 }

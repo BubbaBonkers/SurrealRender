@@ -10,7 +10,7 @@ void DisplayAgent::StartPlay()
 {
     // Simple Testing Cube.
     Object* CubeTest = CreateObject("TestingCube", "Assets/cube.mesh", "Assets/Crate.dds");
-    Object* MultipleObjectTest = CreateObject("SecondCube", "Assets/FancyBox.mesh", "Assets/FancyBoxDDS.dds");
+    Object* MultipleObjectTest = CreateObject("SecondCube", "Assets/FancyBox.mesh", "Assets/FancyBoxDDS.dds", false, true);
     MultipleObjectTest->AddMovementInput(300.0f, -50.0f, 55.0f, true);
     MultipleObjectTest->AddRotationInput(-5.0f, 3.0f, 0.0f, true);
 
@@ -53,9 +53,20 @@ void DisplayAgent::StartPlay()
     WallTest->Scale(10.0f, 10.0f, 1.0f);
     WallTest->AddMovementInput(400.0f, -250.0f, 600.0f, true);
 
+    // Simple Wall.
+    Object* WallTestB = CreateObject("TestingWall", "Assets/cube.mesh", "Assets/Crate.dds");
+    WallTestB->Scale(1.0f, 10.0f, 10.0f);
+    WallTestB->AddMovementInput(850.0f, -250.0f, 200.0f, true);
+
     Object* Origin = CreateObject("TestingCube", "Assets/cube.mesh", "Assets/Crate.dds");
     //Origin->AddMovementInput(0.0f, 10.0f, 0.0f);
     Origin->Scale(0.5f, 0.5f, 0.5f);
+
+    // Testing Bamboo Mesh for Alpha Emissive Light.
+    Object* BambooC = CreateObject("Bamboo3", "Assets/Bamboo.mesh", "Assets/BambooT.dds");
+    BambooC->Scale(30.0f, 30.0f, 30.0f);
+    BambooC->AddMovementInput(290.0f, 50.0f, -170.0f, true);
+    BambooC->AddRotationInput(0, 15.0f, 0, true);
 
     // Camera Acting as Eyes.
     Camera* MainCamera = CreateCamera("Eyes");
@@ -68,17 +79,19 @@ void DisplayAgent::StartPlay()
 
     // Dynamic Point Light.
     CreatePointLight("PointLightTest", { 0, 1, 1, 1 }, 1.0f);
-    XMStoreFloat4x4(&WorldPointLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(13.0f, 15.0f, 0.0f), XMLoadFloat4x4(&WorldPointLights[0]->WorldMatrix)));
+    DirectX::XMStoreFloat4x4(&WorldPointLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(13.0f, 15.0f, 0.0f), XMLoadFloat4x4(&WorldPointLights[0]->WorldMatrix)));
 
     // Static Point Light.
     CreatePointLight("StaticPointLight", { 0, 0, 1.0f, 1 }, 0.0f);
-    XMStoreFloat4x4(&WorldPointLights[1]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(0.0f, -25.0f, -50.0f), XMLoadFloat4x4(&WorldPointLights[1]->WorldMatrix)));
+    DirectX::XMStoreFloat4x4(&WorldPointLights[1]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(0.0f, -25.0f, -50.0f), XMLoadFloat4x4(&WorldPointLights[1]->WorldMatrix)));
 
     // SimpleSpot Light Test.
     CreateSpotLight("SpotLightTest", { 1, 0, 0, 1 }, 1.0f);
-    //WorldSpotLights[0]->AddMovementInput(250.0f, 50.0f, -150.0f, true);
-    WorldSpotLights[0]->AddRotationInput(0.0f, -90.0f, 0.0f, true);
-    XMMATRIX LookNew = XMMatrixLookAtLH({ WorldSpotLights[0]->WorldMatrix._41, WorldSpotLights[0]->WorldMatrix._42, WorldSpotLights[0]->WorldMatrix._43 }, { WorldObjects[8]->WorldMatrix._41, WorldObjects[8]->WorldMatrix._42, WorldObjects[8]->WorldMatrix._43 }, { 0, 1, 0 });
+    DirectX::XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationY(-90.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
+    WorldSpotLights[0]->AddMovementInput(10.0f, 0.0f, 0.0f, true);
+    //WorldSpotLights[0]->AddRotationInput(0.0f, -90.0f, 0.0f);
+    //WorldSpotLights[0]->AddRotationInput(0.0f, 0.0f, 0.0f, true);
+    //XMMATRIX LookNew = XMMatrixLookAtLH({ WorldSpotLights[0]->WorldMatrix._41, WorldSpotLights[0]->WorldMatrix._42, WorldSpotLights[0]->WorldMatrix._43 }, { WorldObjects[8]->WorldMatrix._41, WorldObjects[8]->WorldMatrix._42, WorldObjects[8]->WorldMatrix._43 }, { 0, 1, 0 });
     //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, LookNew);
 }
 
@@ -123,37 +136,36 @@ Camera* DisplayAgent::CreateCamera(const char* DebugName, Object* AttachTo)
 }
 
 // Creates a new object in 3D space.
-Object* DisplayAgent::CreateObject(const char* DebugName, const char* FileName, const char* TextureDDS, bool bHide)
+Object* DisplayAgent::CreateObject(const char* DebugName, const char* FileName, const char* TextureDDS, bool bHide, bool RenderInUI)
 {
     // Create the cube.mesh for testing the object creation.
     Object* NewObject = new Object();
     NewObject->CreateObject(DebugName, FileName, TextureDDS, bHide);             // Create the object and initialize information.
     WorldObjects.push_back(NewObject);
+
+    if (RenderInUI)
+    {
+        WorldInterfaceObjects.push_back(NewObject);
+    }
+
     NewObject->BeginPlay(this);
 
     return NewObject;
 }
 
 // Creates a new object in 3D space.
-Object* DisplayAgent::CreateObject(const char* DebugName, const char* TextureDDS, std::vector<Vertex> VertexData, std::vector<int> IndexData, bool bHide)
+Object* DisplayAgent::CreateObject(const char* DebugName, const char* TextureDDS, std::vector<Vertex> VertexData, std::vector<int> IndexData, bool bHide, bool RenderInUI)
 {
     // Create the cube.mesh for testing the object creation.
     Object* NewObject = new Object();
     NewObject->CreateObject(DebugName, TextureDDS, VertexData, IndexData, bHide);             // Create the object and initialize information.
     WorldObjects.push_back(NewObject);
-    NewObject->BeginPlay(this);
 
-    return NewObject;
-}
+    if (RenderInUI)
+    {
+        WorldInterfaceObjects.push_back(NewObject);
+    }
 
-// Create an object that should be rendered to the UI rather than 3D world geometry.
-Object* DisplayAgent::CreateObject(const char* DebugName, bool bHide)
-{
-    // Create the cube.mesh for testing the object creation.
-    Object* NewObject = new Object();
-    NewObject->RenderAsUI = true;
-    NewObject->CreateObject(DebugName, bHide);             // Create the object and initialize information.
-    WorldInterfaceObjects.push_back(NewObject);
     NewObject->BeginPlay(this);
 
     return NewObject;
@@ -202,10 +214,6 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
     // Increase global game time.
     G_GameTime += DeltaTime;
 
-    // Update all objects and cameras.
-    Context->ClearRenderTargetView(RenderTargetView, RenderBackgroundColor);
-    Context->ClearDepthStencilView(ZBufferView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-
     // Some movement testing stuff.
 
     // Translate the object in world space.
@@ -215,8 +223,15 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
     WorldObjects[1]->AddMovementInput(0.0f, sin(G_GameTime) * 100.0f, 0.0f);
     WorldPointLights[0]->AddRotationInput(-5.0f, 0.0f, 0.0f);
     WorldPointLights[0]->AddMovementInput(-5.0f, 0.0f, 0.0f);
-    //WorldSpotLights[0]->AddRotationInput(0.0f, 0.0f, 5.0f);
+    WorldSpotLights[0]->AddRotationInput(0.0f, 0.0f, 0.0f);
 
+    DirectX::XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationX(3.0f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
+    //DirectX::XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(0.0f, 10.0f * DeltaTime, 0.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
+    //WorldSpotLights[0]->AddMovementInput(0.0f, 50.0f, 0.0f);
+    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationY(0.5f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
+    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationZ(0.5f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
+
+    /*
     // Setup UI stuffs.
     OffscreenViewportA.Width = 400;
     OffscreenViewportA.Height = 500;
@@ -224,12 +239,17 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
     OffscreenViewportA.TopLeftY = 0;
 
     Context->RSSetViewports(1, &OffscreenViewportA);
+    Context->OMSetBlendState(BlendState, 0, 0xFFFFFFFF);
+
+    // Update all objects and cameras.
+    Context->ClearRenderTargetView(PIP_RenderTargetView, RenderBackgroundColor);
+    Context->ClearDepthStencilView(PIP_ZBufferView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
     for (unsigned int i = 0; i < WorldInterfaceObjects.size(); ++i)
     {
         // Setup Render Targets.
-        ID3D11RenderTargetView* TempRTV[] = { RenderTargetView };       // Output manager.
-        Context->OMSetRenderTargets(1, TempRTV, ZBufferView);
+        ID3D11RenderTargetView* TempRTV[] = { PIP_RenderTargetView };       // Output manager.
+        Context->OMSetRenderTargets(1, TempRTV, PIP_ZBufferView);
 
         PIP_ConstantBuffer PIP_ConstBuff;
         PIP_ConstBuff.CameraWorldMatrix = XMLoadFloat4x4(&Cam->SpacialEnvironment.WorldMatrix);
@@ -245,24 +265,29 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
         // Apply matrix math in vertex shader and connect the constant buffer to the pipeline.
         ID3D11Buffer* Constants[] = { ConstantBuffer };
 
+        //Context->OMSetRenderTargets(1, { &RenderTargetView }, ZBufferView);
+
         Context->PSSetShader(PIP_PixelShader, 0, 0);                            // Pixel Shader stage.
         Context->PSSetSamplers(0, 1, &LinearSamplerState);
         Context->PSSetConstantBuffers(0, 1, Constants);
-        Context->PSSetShaderResources(0, 1, &WorldInterfaceObjects[i]->ShaderResourceView);
+        Context->PSSetShaderResources(0, 1, &PIP_ShaderResourceView);
 
-        Context->Draw(100, 0);
+        Context->DrawIndexed(WorldObjects[i]->Indices.size(), 0, 0);
+
+        WorldInterfaceObjects[i]->ShaderResourceView = PIP_ShaderResourceView;
+
+        Context->PSSetShaderResources(0, 1, nullptr);
     }
-
-    XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationX(sin(G_GameTime) * 10.0f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
-    XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(0.0f, sin(G_GameTime) * 10.0f * DeltaTime, 0.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
-    //WorldSpotLights[0]->AddMovementInput(0.0f, 50.0f, 0.0f);
-    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationY(0.5f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
-    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationZ(0.5f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
+    */
 
     if (Cam->RotateDirLight)
     {
         WorldDirectionalLights[0]->AddRotationInput(0.25f, 3.0f, 0.1f);
     }
+
+    // Update all objects and cameras.
+    Context->ClearRenderTargetView(RenderTargetView, RenderBackgroundColor);
+    Context->ClearDepthStencilView(ZBufferView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
     for (unsigned int i = 0; i < WorldObjects.size(); ++i)
     {
@@ -380,6 +405,11 @@ void DisplayAgent::ReleaseInterfaces()
     SAFE_RELEASE(SwapChain);
     SAFE_RELEASE(Context);
     SAFE_RELEASE(Device);
+    SAFE_RELEASE(PIPTexture);
+    SAFE_RELEASE(PIP_PixelShader);
+    SAFE_RELEASE(PIP_RenderTargetView);
+    SAFE_RELEASE(PIP_PixelShader);
+    SAFE_RELEASE(PIP_ShaderResourceView);
 }
 
 // Delete all pointers before close.
