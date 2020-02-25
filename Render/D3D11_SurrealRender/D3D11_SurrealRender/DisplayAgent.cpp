@@ -73,6 +73,20 @@ void DisplayAgent::StartPlay()
     DirectX::XMStoreFloat4x4(&RedPlanetDome->WorldMatrix, XMMatrixMultiply(XMLoadFloat4x4(&RedPlanetDome->WorldMatrix), XMLoadFloat4x4(&WavingCube->WorldMatrix)));
     RedPlanetDome->SpecularIntensity = 8.0f;
 
+    // Red Planet.
+    Object* RedPlanetDomeB = CreateObject("RedPlanetDome", "Assets/RedPlanetDome.mesh", "Assets/RedPlanetDome.dds");
+    RedPlanetDomeB->Scale(1.0f, 1.0f, 1.0f);
+    RedPlanetDomeB->AddMovementInput(-200.0f, 15.0f, 350.0f, true);
+    DirectX::XMStoreFloat4x4(&RedPlanetDomeB->WorldMatrix, XMMatrixMultiply(XMLoadFloat4x4(&RedPlanetDomeB->WorldMatrix), XMLoadFloat4x4(&WavingCube->WorldMatrix)));
+    RedPlanetDomeB->SpecularIntensity = 8.0f;
+
+    // Red Planet.
+    Object* RedPlanetDomeC = CreateObject("RedPlanetDome", "Assets/RedPlanetDome.mesh", "Assets/RedPlanetDome.dds");
+    RedPlanetDomeC->Scale(1.0f, 1.0f, 1.0f);
+    RedPlanetDomeC->AddMovementInput(-300.0f, 15.0f, 450.0f, true);
+    DirectX::XMStoreFloat4x4(&RedPlanetDomeC->WorldMatrix, XMMatrixMultiply(XMLoadFloat4x4(&RedPlanetDomeC->WorldMatrix), XMLoadFloat4x4(&WavingCube->WorldMatrix)));
+    RedPlanetDomeC->SpecularIntensity = 8.0f;
+
     for (int x = 0; x < 10; ++x)
     {
         int RandomHelper = time(NULL);
