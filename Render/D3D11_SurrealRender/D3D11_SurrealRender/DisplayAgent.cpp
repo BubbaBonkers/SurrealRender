@@ -1,6 +1,7 @@
 #include "DisplayAgent.h"
 #include <iostream>
 #include <string>
+#include <time.h>
 
 #define SAFE_RELEASE(ptr) { if(ptr) { ptr->Release(); ptr = nullptr; } }
 #define D3DXToRadian(degree) ((degree) * (D3DX_PI / 180.0f))
@@ -10,72 +11,126 @@ void DisplayAgent::StartPlay()
 {
     // Simple Testing Cube.
     Object* CubeTest = CreateObject("TestingCube", "Assets/cube.mesh", "Assets/Crate.dds");
+    CubeTest->SpecularIntensity = 32.0f;
+
+    // Fancy Box.
     Object* MultipleObjectTest = CreateObject("SecondCube", "Assets/FancyBox.mesh", "Assets/FancyBoxDDS.dds", false, true);
-    MultipleObjectTest->AddMovementInput(300.0f, -50.0f, 55.0f, true);
+    MultipleObjectTest->AddMovementInput(30.0f, -5.0f, 5.0f, true);
     MultipleObjectTest->AddRotationInput(-5.0f, 3.0f, 0.0f, true);
 
-    // Waving Cube.
-    Object* WavingCube = CreateObject("PlanetWave", "Assets/Planet1.mesh", "Assets/Planet1.dds");
-    WavingCube->EmissiveColor = { 1.0f, 0.2f, 0, 1.0f };
-    WavingCube->AddMovementInput(2000.0f, 100.0f, -2000.0f, true);
-    WavingCube->Scale(3.0f, 3.0f, 3.0f);
+    // Star.
+    Object* WavingCube = CreateObject("PlanetWave", "Assets/Planet1.mesh", "Assets/Planet1.dds", false, false);
+    WavingCube->EmissiveColor = { 1.5f, 0.2f, 0, 1.0f };
+    WavingCube->AddMovementInput(600.0f, 10.0f, -450.0f, true);
+    WavingCube->Scale(12.0f, 12.0f, 12.0f);
     WavingCube->WavingIntensity = 1.0f;
+    WavingCube->WavingMovement = 8.0f;
+    WavingCube->WavingOffset = 3.0f;
+
+    // Red Planet.
+    Object* RedPlanet = CreateObject("RedPlanet", "Assets/RedPlanet.mesh", "Assets/RedPlanet.dds", false, false);
+    RedPlanet->Scale(1.0f, 1.0f, 1.0f);
+    RedPlanet->AddMovementInput(-100.0f, 15.0f, 250.0f, true);
+    RedPlanet->EmissiveColor = { 0.3f, 0.025f, 0.04f, 1.0f };
+    DirectX::XMStoreFloat4x4(&RedPlanet->WorldMatrix, XMMatrixMultiply(XMLoadFloat4x4(&RedPlanet->WorldMatrix), XMLoadFloat4x4(&WavingCube->WorldMatrix)));
+    RedPlanet->SpecularIntensity = 32.0f;
 
     // Disco Cube.
     Object* StaticSinWaveCube = CreateObject("TestingCubeWave", "Assets/cube.mesh", "Assets/Crate.dds");
     StaticSinWaveCube->DiscoIntensity = 1.0f;
-    StaticSinWaveCube->AddMovementInput(-300.0f, 110.0f, -250.0f, true);
+    StaticSinWaveCube->AddMovementInput(-30.0f, 11.0f, -25.0f, true);
 
     // Testing Torch Mesh.
     Object* Torch = CreateObject("TorchTest", "Assets/Torch.mesh", "Assets/TorchTexture.dds");
     Torch->Scale(30.0f, 30.0f, 30.0f);
-    Torch->AddMovementInput(-250.0f, 150.0f, 150.0f, true);
+    Torch->AddMovementInput(-25.0f, 15.0f, 15.0f, true);
 
     // Testing Bamboo Mesh.
     Object* Bamboo = CreateObject("Bamboo", "Assets/Bamboo.mesh", "Assets/BambooT.dds");
     Bamboo->Scale(30.0f, 30.0f, 30.0f);
-    Bamboo->AddMovementInput(250.0f, 50.0f, -150.0f, true);
-
-    // Testing Bamboo Mesh for Alpha Emissive Light.
-    Object* EmissiveBamboo = CreateObject("Bamboo", "Assets/Bamboo.mesh", "Assets/BambooT.dds");
-    EmissiveBamboo->EmissiveColor = { 3, 3, 3, 3 };
-    EmissiveBamboo->Scale(30.0f, 30.0f, 30.0f);
-    EmissiveBamboo->AddMovementInput(250.0f, 50.0f, -150.0f, true);
-    EmissiveBamboo->AddRotationInput(0, 15.0f, 0, true);
-
-    // Testing Emmisive Material for Mesh.
-    Object* EmissiveCube = CreateObject("EmissiveObject", "Assets/cube.mesh", "Assets/Crate.dds");
-    EmissiveCube->EmissiveColor = { 3, 3, 3, 3 };
-    EmissiveCube->AddMovementInput(250.0f, -150.0f, -150.0f, true);
+    Bamboo->AddMovementInput(25.0f, 5.0f, -15.0f, true);
+    Bamboo->bDisableBackfaceCulling = true;
 
     // Simple Wall.
     Object* WallTest = CreateObject("TestingWall", "Assets/cube.mesh", "Assets/Crate.dds");
     WallTest->Scale(10.0f, 10.0f, 1.0f);
-    WallTest->AddMovementInput(400.0f, -250.0f, 600.0f, true);
+    WallTest->AddMovementInput(5.0f, -2.5f, 10.4f, true);
+    WallTest->BWIntensity = 1.0f;
 
     // Simple Wall.
     Object* WallTestB = CreateObject("TestingWall", "Assets/cube.mesh", "Assets/Crate.dds");
     WallTestB->Scale(1.0f, 10.0f, 10.0f);
-    WallTestB->AddMovementInput(850.0f, -250.0f, 200.0f, true);
+    WallTestB->AddMovementInput(15.4f, -2.5f, 2.0f, true);
+    WallTestB->BWIntensity = 1.0f;
 
     Object* Origin = CreateObject("TestingCube", "Assets/cube.mesh", "Assets/Crate.dds");
-    //Origin->AddMovementInput(0.0f, 10.0f, 0.0f);
     Origin->Scale(0.5f, 0.5f, 0.5f);
 
-    // Testing Bamboo Mesh for Alpha Emissive Light.
-    Object* BambooC = CreateObject("Bamboo3", "Assets/Bamboo.mesh", "Assets/BambooT.dds");
-    BambooC->Scale(30.0f, 30.0f, 30.0f);
-    BambooC->AddMovementInput(290.0f, 50.0f, -170.0f, true);
-    BambooC->AddRotationInput(0, 15.0f, 0, true);
+    // Red Planet.
+    Object* RedPlanetDome = CreateObject("RedPlanetDome", "Assets/RedPlanetDome.mesh", "Assets/RedPlanetDome.dds");
+    RedPlanetDome->Scale(1.0f, 1.0f, 1.0f);
+    RedPlanetDome->AddMovementInput(-100.0f, 15.0f, 250.0f, true);
+    DirectX::XMStoreFloat4x4(&RedPlanetDome->WorldMatrix, XMMatrixMultiply(XMLoadFloat4x4(&RedPlanetDome->WorldMatrix), XMLoadFloat4x4(&WavingCube->WorldMatrix)));
+    RedPlanetDome->SpecularIntensity = 8.0f;
+
+    for (int x = 0; x < 10; ++x)
+    {
+        int RandomHelper = time(NULL);
+
+        for (int y = 0; y < 10; ++y)
+        {
+            srand(RandomHelper);
+            int RandX = (rand() % 11);
+            int RandY = (rand() % 11);
+
+            // Simple Testing Cube.
+            Object* PalmTree = CreateObject("Palm1", "Assets/Palm1.mesh", "Assets/Palm1.dds");
+            PalmTree->Scale((1.0f + (RandX / 7.0f)), (1.0f + (RandY / 7.0f)), (1.0f + (RandX / 7.0f)));
+            PalmTree->bDisableBackfaceCulling = true;
+            PalmTree->SpecularIntensity = 16.0f;
+
+            PalmTree->AddMovementInput((-410.0f + ((x * 5) + RandX)), (183.0f - (x * 0.5f)), (-350.0f + ((y * 10) + RandY)), true);
+            PalmTree->AddRotationInput(0.0f, (1.0f + (RandX * 3.0f)), 0.0f, true);
+
+            RandomHelper += 7;
+        }
+
+        RandomHelper += 1;
+    }
+
+    // Red Planet.
+    Object* Earth = CreateObject("Earth", "Assets/Earth.mesh", "Assets/Earth.dds");
+    Earth->Scale(3.0f, 3.0f, 3.0f);
+    Earth->AddMovementInput(-400.0f, 15.0f, -300.0f, true);
+    Earth->AddRotationInput(20.0f, 140.0f, 120.0f, true);
+    Earth->EmissiveColor = { 0.3f, 0.001f, 0.04f, 1.0f };
+    Earth->SpecularIntensity = 32.0f;
+    Earth->BlueWavingIntensity = 1.0f;
+    Earth->WavingIntensity = 0.0f;
+    Earth->WavingMovement = 0.5f;
+    Earth->WavingOffset = 2.0f;
+
+    // Spaceship.
+    Object* Spaceship = CreateObject("Spaceship", "Assets/Spaceship.mesh", "Assets/Spaceship.dds");
+    Spaceship->SpecularIntensity = 32.0f;
+    Spaceship->Scale(30.0f, 30.0f, 30.0f);
+    Spaceship->bDisableBackfaceCulling = true;
+    Spaceship->AddMovementInput(0.0f, 10.0f, 0.0f, true);
+
+    // Skybox.
+    Object* Skybox = CreateObject("Skybox", "Assets/cube.mesh", "Assets/Nebula.dds");
+    Skybox->Scale(-6000.0f, -6000.0f, -6000.0f);
+    Skybox->AddMovementInput(0.0f, 3000.0f, 0.0f, true);
+    Skybox->EmissiveColor = { 1, 1, 1, 1 };
 
     // Camera Acting as Eyes.
     Camera* MainCamera = CreateCamera("Eyes");
     MainCamera->AddMovementInput(0, 3.0f, -5.0f);
     MainCamera->AddRotationInput(-0.45f, 0.0f, 0.0f, true, true);
-    MainCamera->LookAtTarget = MultipleObjectTest;
+    MainCamera->LookAtTarget = Spaceship;
 
     // Directional Light.
-    CreateDirectionalLight("Sunlight", { 1, 1, 1, 1 }, { 1, 1, 1, 1 }, 1.0f);
+    CreateDirectionalLight("Sunlight", { 1, 1, 1, 1 }, { 1, 1, 1, 1 }, 0.8f);
 
     // Dynamic Point Light.
     CreatePointLight("PointLightTest", { 0, 1, 1, 1 }, 1.0f);
@@ -89,10 +144,6 @@ void DisplayAgent::StartPlay()
     CreateSpotLight("SpotLightTest", { 1, 0, 0, 1 }, 1.0f);
     DirectX::XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationY(-90.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
     WorldSpotLights[0]->AddMovementInput(10.0f, 0.0f, 0.0f, true);
-    //WorldSpotLights[0]->AddRotationInput(0.0f, -90.0f, 0.0f);
-    //WorldSpotLights[0]->AddRotationInput(0.0f, 0.0f, 0.0f, true);
-    //XMMATRIX LookNew = XMMatrixLookAtLH({ WorldSpotLights[0]->WorldMatrix._41, WorldSpotLights[0]->WorldMatrix._42, WorldSpotLights[0]->WorldMatrix._43 }, { WorldObjects[8]->WorldMatrix._41, WorldObjects[8]->WorldMatrix._42, WorldObjects[8]->WorldMatrix._43 }, { 0, 1, 0 });
-    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, LookNew);
 }
 
 // Called every frame.
@@ -124,6 +175,20 @@ void DisplayAgent::EndPlay()
     ReleasePointerObjects(true, true, true);
 }
 
+// Get an object by its debug name. This returns the first one found with the name, it will not return any after that. Returns nullptr if no object is found.
+Object* DisplayAgent::GetObjectByName(std::string Name)
+{
+    for (unsigned int i = 0; i < WorldObjects.size(); ++i)
+    {
+        if (WorldObjects[i]->Name == Name)
+        {
+            return WorldObjects[i];
+        }
+    }
+
+    return nullptr;
+}
+
 // Create a new camera, leave AttachTo as "nullptr" to not attach to an object.
 Camera* DisplayAgent::CreateCamera(const char* DebugName, Object* AttachTo)
 {
@@ -142,6 +207,23 @@ Object* DisplayAgent::CreateObject(const char* DebugName, const char* FileName, 
     Object* NewObject = new Object();
     NewObject->CreateObject(DebugName, FileName, TextureDDS, bHide);             // Create the object and initialize information.
     WorldObjects.push_back(NewObject);
+
+    if (RenderInUI)
+    {
+        WorldInterfaceObjects.push_back(NewObject);
+    }
+
+    NewObject->BeginPlay(this);
+
+    return NewObject;
+}
+
+Object* DisplayAgent::CreateObject(const char* DebugName, const char* FileName, const char* TextureDDS, std::vector<Object*>* OutputVector, bool bHide, bool RenderInUI)
+{
+    // Create the cube.mesh for testing the object creation.
+    Object* NewObject = new Object();
+    NewObject->CreateObject(DebugName, FileName, TextureDDS, bHide);             // Create the object and initialize information.
+    OutputVector->push_back(NewObject);
 
     if (RenderInUI)
     {
@@ -213,25 +295,20 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
 {
     // Increase global game time.
     G_GameTime += DeltaTime;
-
-    // Some movement testing stuff.
-
+    
     // Translate the object in world space.
-    WorldObjects[0]->AddRotationInput(0, 1.0f, 0);
-    WorldObjects[3]->AddRotationInput(0, 0, 1.0f);
-    WorldObjects[2]->AddRotationInput(0, -0.05f, 0);
-    WorldObjects[1]->AddMovementInput(0.0f, sin(G_GameTime) * 100.0f, 0.0f);
-    WorldPointLights[0]->AddRotationInput(-5.0f, 0.0f, 0.0f);
-    WorldPointLights[0]->AddMovementInput(-5.0f, 0.0f, 0.0f);
-    WorldSpotLights[0]->AddRotationInput(0.0f, 0.0f, 0.0f);
-
-    DirectX::XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationX(3.0f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
-    //DirectX::XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixTranslation(0.0f, 10.0f * DeltaTime, 0.0f), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
-    //WorldSpotLights[0]->AddMovementInput(0.0f, 50.0f, 0.0f);
-    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationY(0.5f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
-    //XMStoreFloat4x4(&WorldSpotLights[0]->WorldMatrix, XMMatrixMultiply(XMMatrixRotationZ(0.5f * DeltaTime), XMLoadFloat4x4(&WorldSpotLights[0]->WorldMatrix)));
-
-    /*
+    GetObjectByName("TestingCube")->AddRotationInput(0, 1.0f, 0);
+    GetObjectByName("RedPlanet")->AddRotationInput(0, -0.05f, 0);
+    GetObjectByName("PlanetWave")->AddRotationInput(0.0f, 0.1f, 0.0f);
+    GetObjectByName("RedPlanetDome")->AddRotationInput(0.0f, -0.08f, 0.0f);
+    GetObjectByName("TestingCubeWave")->AddRotationInput(-5.0f, 0.0f, 0.0f);
+    GetObjectByName("SecondCube")->AddMovementInput(0.0f, sin(G_GameTime) * 10.0f, 0.0f);
+    GetObjectByName("Spaceship")->AddMovementInput(0.0f, sin(G_GameTime) * 1.0f, 20.0f);
+    GetObjectByName("Skybox")->WorldMatrix._41 = Cam->SpacialEnvironment.WorldMatrix._41;
+    GetObjectByName("Skybox")->WorldMatrix._42 = Cam->SpacialEnvironment.WorldMatrix._42 + 5000.0f;
+    GetObjectByName("Skybox")->WorldMatrix._43 = Cam->SpacialEnvironment.WorldMatrix._43;
+    WorldPointLights[0]->AddMovementInput(-0.5f, 0.0f, 0.0f);
+    
     // Setup UI stuffs.
     OffscreenViewportA.Width = 400;
     OffscreenViewportA.Height = 500;
@@ -244,39 +321,59 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
     // Update all objects and cameras.
     Context->ClearRenderTargetView(PIP_RenderTargetView, RenderBackgroundColor);
     Context->ClearDepthStencilView(PIP_ZBufferView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-
+    
+    /*
     for (unsigned int i = 0; i < WorldInterfaceObjects.size(); ++i)
     {
         // Setup Render Targets.
         ID3D11RenderTargetView* TempRTV[] = { PIP_RenderTargetView };       // Output manager.
         Context->OMSetRenderTargets(1, TempRTV, PIP_ZBufferView);
 
-        PIP_ConstantBuffer PIP_ConstBuff;
-        PIP_ConstBuff.CameraWorldMatrix = XMLoadFloat4x4(&Cam->SpacialEnvironment.WorldMatrix);
-        PIP_ConstBuff.DeltaTime = DeltaTime;
-        PIP_ConstBuff.WorldTime = G_GameTime;
+        // Create the ConstBuffer to send to the graphics card ConstantBuffer.
+        ConstBuffer cb1;
+        cb1.WorldMatrix = XMLoadFloat4x4(&WorldInterfaceObjects[i]->WorldMatrix);
+        cb1.ViewMatrix = XMMatrixInverse(0, XMLoadFloat4x4(&Cam->SpacialEnvironment.WorldMatrix));
+        cb1.ProjectionMatrix = XMLoadFloat4x4(&Cam->SpacialEnvironment.ProjectionMatrix);
+        cb1.DirectionalLightDirections[0] = WorldDirectionalLights[0]->Direction;
+        cb1.DirectionalLightColors[0] = WorldDirectionalLights[0]->Color;
+        cb1.DirectionalLightIntensities = WorldDirectionalLights[0]->Intensity;
+        cb1.AmbientLightColor = AmbientLightCol;
+        cb1.AmbientLightIntensity = AmbientLightIntense;
+        cb1.PointLightColors[0] = WorldPointLights[0]->Color;
+        cb1.PointLightIntensities = WorldPointLights[0]->Intensity;
+        cb1.PointLightPositions[0] = XMFLOAT4(WorldPointLights[0]->WorldMatrix._41, WorldPointLights[0]->WorldMatrix._42, WorldPointLights[0]->WorldMatrix._43, WorldPointLights[0]->WorldMatrix._44);
+        cb1.PointLightColors[1] = WorldPointLights[1]->Color;
+        cb1.PointLightPositions[1] = XMFLOAT4(WorldPointLights[1]->WorldMatrix._41, WorldPointLights[1]->WorldMatrix._42, WorldPointLights[1]->WorldMatrix._43, WorldPointLights[1]->WorldMatrix._44);
+        cb1.CameraWorldMatrix = XMLoadFloat4x4(&Cam->SpacialEnvironment.WorldMatrix);
+        cb1.BlinnPhongIntensity = WorldInterfaceObjects[i]->SpecularIntensity;
+        cb1.WorldTime = G_GameTime;
+        cb1.DeltaTime = DeltaTime;
+        cb1.DiscoIntensity = WorldInterfaceObjects[i]->DiscoIntensity;
+        cb1.WavingIntensity = WorldInterfaceObjects[i]->WavingIntensity;
+        cb1.WavingOffset = WorldInterfaceObjects[i]->WavingOffset;
+        cb1.WavingMovement = WorldInterfaceObjects[i]->WavingMovement;
+        cb1.SpotLightColors[0] = WorldSpotLights[0]->Color;
+        cb1.SpotLightDirections[0] = XMFLOAT4(WorldSpotLights[0]->WorldMatrix._31, WorldSpotLights[0]->WorldMatrix._22, WorldSpotLights[0]->WorldMatrix._13, WorldSpotLights[0]->WorldMatrix._44);
+        cb1.SpotLightPositions[0] = XMFLOAT4(WorldSpotLights[0]->WorldMatrix._41, WorldSpotLights[0]->WorldMatrix._42, WorldSpotLights[0]->WorldMatrix._43, WorldSpotLights[0]->WorldMatrix._44);
+        cb1.SpotLightConeRatios = WorldSpotLights[0]->ConeRatio;
+        cb1.SpotLightIntensities = WorldSpotLights[0]->Intensity;
+        cb1.EmissiveColor = WorldInterfaceObjects[i]->EmissiveColor;
+        cb1.BlueWavingIntensity = WorldInterfaceObjects[i]->BlueWavingIntensity;
 
-        // Send data to the graphics card.
-        D3D11_MAPPED_SUBRESOURCE PIP_GPUBuffer;
-        Context->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &PIP_GPUBuffer);
-        memcpy(PIP_GPUBuffer.pData, &PIP_ConstBuff, sizeof(PIP_ConstBuff));
-        Context->Unmap(ConstantBuffer, 0);
-
-        // Apply matrix math in vertex shader and connect the constant buffer to the pipeline.
-        ID3D11Buffer* Constants[] = { ConstantBuffer };
-
-        //Context->OMSetRenderTargets(1, { &RenderTargetView }, ZBufferView);
-
-        Context->PSSetShader(PIP_PixelShader, 0, 0);                            // Pixel Shader stage.
+        Context->IASetPrimitiveTopology(WorldInterfaceObjects[i]->TopologyType);
+        Context->VSSetShader(MeshVertexShader, 0, 0);
+        Context->VSSetConstantBuffers(0, 1, { &ConstantBuffer });
+        Context->PSSetShader(PixelShader, 0, 0);                            // Pixel Shader stage.
         Context->PSSetSamplers(0, 1, &LinearSamplerState);
-        Context->PSSetConstantBuffers(0, 1, Constants);
-        Context->PSSetShaderResources(0, 1, &PIP_ShaderResourceView);
+        Context->PSSetConstantBuffers(0, 1, { &ConstantBuffer });
+        Context->PSSetShaderResources(0, 1, &WorldObjects[i]->ShaderResourceView);
 
         Context->DrawIndexed(WorldObjects[i]->Indices.size(), 0, 0);
 
         WorldInterfaceObjects[i]->ShaderResourceView = PIP_ShaderResourceView;
 
-        Context->PSSetShaderResources(0, 1, nullptr);
+        ID3D11ShaderResourceView* pTempResource = NULL;
+        Context->PSSetShaderResources(0, 1, &pTempResource);
     }
     */
 
@@ -285,46 +382,26 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
         WorldDirectionalLights[0]->AddRotationInput(0.25f, 3.0f, 0.1f);
     }
 
+    Context->OMSetBlendState(BlendState, 0, 0xFFFFFFFF);
+
     // Update all objects and cameras.
     Context->ClearRenderTargetView(RenderTargetView, RenderBackgroundColor);
     Context->ClearDepthStencilView(ZBufferView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
+    Context->RSSetViewports(1, &Viewport);
+    Context->OMSetRenderTargets(1, { &RenderTargetView }, ZBufferView);
+    Context->IASetInputLayout(InputLayout);
+
     for (unsigned int i = 0; i < WorldObjects.size(); ++i)
     {
         // Setup Render Targets.
-        ID3D11RenderTargetView* TempRTV[] = { RenderTargetView };       // Output manager.
-        Context->OMSetRenderTargets(1, TempRTV, ZBufferView);
-        //Context->OMSetBlendState(BlendState, 0, 0xffffffff);
-        Context->RSSetViewports(1, &Viewport);                          // This is the Rasterizer.
-
-        // Load the Cube object data into the video card.
-        D3D11_BUFFER_DESC BufferDescription;
-        D3D11_SUBRESOURCE_DATA SubData;
-        ZeroMemory(&BufferDescription, sizeof(BufferDescription));
-        ZeroMemory(&SubData, sizeof(SubData));
-
-        BufferDescription.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-        BufferDescription.ByteWidth = sizeof(Vertex) * WorldObjects[i]->Vertices.size();
-        BufferDescription.CPUAccessFlags = 0;
-        BufferDescription.MiscFlags = 0;
-        BufferDescription.StructureByteStride = 0;
-        BufferDescription.Usage = D3D11_USAGE_IMMUTABLE;
-
-        SubData.pSysMem = WorldObjects[i]->Vertices.data();
-
-        // Index Buffer.
-        BufferDescription.BindFlags = D3D11_BIND_INDEX_BUFFER;
-        BufferDescription.ByteWidth = sizeof(int) * WorldObjects[i]->Indices.size();
-        SubData.pSysMem = WorldObjects[i]->Indices.data();
+        Context->IASetPrimitiveTopology(WorldObjects[i]->TopologyType);
 
         // Immediate Context. Set the pipeline.
         UINT MeshStrides[] = { sizeof(Vertex) };
         UINT MeshOffsets[] = { 0 };
-        ID3D11Buffer* TempMeshVertexBuffer[] = { WorldObjects[i]->VertexBuffer };
-        Context->IASetPrimitiveTopology(WorldObjects[i]->TopologyType);
-        Context->IASetVertexBuffers(0, 1, TempMeshVertexBuffer, MeshStrides, MeshOffsets);
+        Context->IASetVertexBuffers(0, 1, { &WorldObjects[i]->VertexBuffer }, MeshStrides, MeshOffsets);
         Context->IASetIndexBuffer(WorldObjects[i]->IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-        Context->IASetInputLayout(InputLayout);
 
         // GPU Mapping.
 
@@ -344,47 +421,120 @@ void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float Delta
         cb1.PointLightColors[1] = WorldPointLights[1]->Color;
         cb1.PointLightPositions[1] = XMFLOAT4(WorldPointLights[1]->WorldMatrix._41, WorldPointLights[1]->WorldMatrix._42, WorldPointLights[1]->WorldMatrix._43, WorldPointLights[1]->WorldMatrix._44);
         cb1.CameraWorldMatrix = XMLoadFloat4x4(&Cam->SpacialEnvironment.WorldMatrix);
-        cb1.BlinnPhongIntensity = 16.0f;
+        cb1.BlinnPhongIntensity = WorldObjects[i]->SpecularIntensity;
         cb1.WorldTime = G_GameTime;
         cb1.DeltaTime = DeltaTime;
         cb1.DiscoIntensity = WorldObjects[i]->DiscoIntensity;
         cb1.WavingIntensity = WorldObjects[i]->WavingIntensity;
+        cb1.WavingOffset = WorldObjects[i]->WavingOffset;
+        cb1.WavingMovement = WorldObjects[i]->WavingMovement;
         cb1.SpotLightColors[0] = WorldSpotLights[0]->Color;
         cb1.SpotLightDirections[0] = XMFLOAT4(WorldSpotLights[0]->WorldMatrix._31, WorldSpotLights[0]->WorldMatrix._22, WorldSpotLights[0]->WorldMatrix._13, WorldSpotLights[0]->WorldMatrix._44);
         cb1.SpotLightPositions[0] = XMFLOAT4(WorldSpotLights[0]->WorldMatrix._41, WorldSpotLights[0]->WorldMatrix._42, WorldSpotLights[0]->WorldMatrix._43, WorldSpotLights[0]->WorldMatrix._44);
         cb1.SpotLightConeRatios = WorldSpotLights[0]->ConeRatio;
         cb1.SpotLightIntensities = WorldSpotLights[0]->Intensity;
         cb1.EmissiveColor = WorldObjects[i]->EmissiveColor;
+        cb1.BlueWavingIntensity = WorldObjects[i]->BlueWavingIntensity;
+        cb1.BWIntensity = WorldObjects[i]->BWIntensity;
 
-        // Send data to the graphics card.
-        D3D11_MAPPED_SUBRESOURCE GPUBufferCDS;
-        Context->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &GPUBufferCDS);
-        memcpy(GPUBufferCDS.pData, &cb1, sizeof(cb1));
-        Context->Unmap(ConstantBuffer, 0);
+        // PIP Constant Buffer.
+        PIP_ConstantBuffer PIP_ConstBuff;
+        PIP_ConstBuff.CameraWorldMatrix = XMLoadFloat4x4(&Cam->SpacialEnvironment.WorldMatrix);
+        PIP_ConstBuff.DeltaTime = DeltaTime;
+        PIP_ConstBuff.WorldTime = G_GameTime;
+
+        if (WorldObjects[i]->RenderAsUI < 1.0f)
+        {
+            // Send data to the graphics card.
+            D3D11_MAPPED_SUBRESOURCE GPUBufferCDS;
+            Context->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &GPUBufferCDS);
+            memcpy(GPUBufferCDS.pData, &cb1, sizeof(cb1));
+            Context->Unmap(ConstantBuffer, 0);
+        }
+        else
+        {
+            // Send data to the graphics card.
+            D3D11_MAPPED_SUBRESOURCE PIP_GPUBuffer;
+            Context->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &PIP_GPUBuffer);
+            memcpy(PIP_GPUBuffer.pData, &PIP_ConstBuff, sizeof(PIP_ConstBuff));
+            Context->Unmap(ConstantBuffer, 0);
+        }
 
 
-        // Apply matrix math in vertex shader and connect the constant buffer to the pipeline.
-        ID3D11Buffer* Constants[] = { ConstantBuffer };
-
-        // Shader Stuffs.
+        // Set the culling mode based on the object.
+        if (WorldObjects[i]->bDisableBackfaceCulling)
+        {
+            Context->RSSetState(RasterizerStateNoCull);
+        }
+        else
+        {
+            Context->RSSetState(RasterizerState);
+        }
 
         // Vertex and Pixel Shader stages.
         Context->VSSetShader(MeshVertexShader, 0, 0);
-        Context->VSSetConstantBuffers(0, 1, Constants);
-        Context->PSSetShader(PixelShader, 0, 0);                            // Pixel Shader stage.
+        Context->VSSetConstantBuffers(0, 1, { &ConstantBuffer });
+
+        if (WorldObjects[i]->RenderAsUI < 1.0f)
+        {
+            Context->PSSetShader(PixelShader, 0, 0);                            // Pixel Shader stage.
+        }
+        else
+        {
+            Context->PSSetShader(PIP_PixelShader, 0, 0);
+        }
+
         Context->PSSetSamplers(0, 1, &LinearSamplerState);
-        Context->PSSetConstantBuffers(0, 1, Constants);
+        Context->PSSetConstantBuffers(0, 1, { &ConstantBuffer });
         Context->PSSetShaderResources(0, 1, &WorldObjects[i]->ShaderResourceView);
 
-        unsigned int sizer = sizeof(ConstantBuffer);
-        unsigned int size = sizeof(cb1);
-        assert((sizeof(cb1) % 16) == 0);
-
         // Draw and Present.
-
         Context->DrawIndexed(WorldObjects[i]->Indices.size(), 0, 0);
     }
+    /*
+    // Instanced Drawing Call.
+    Context->IASetPrimitiveTopology(TempInstanced[0]->TopologyType);
 
+    // Immediate Context. Set the pipeline.
+    UINT MeshStrides[] = { sizeof(Vertex) };
+    UINT MeshOffsets[] = { 0 };
+    Context->IASetVertexBuffers(0, 1, { &TempInstanced[0]->VertexBuffer }, MeshStrides, MeshOffsets);
+    Context->IASetIndexBuffer(TempInstanced[0]->IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+    Instanced InstancedCBuff;
+    InstancedCBuff.ViewMatrix = XMMatrixInverse(0, XMLoadFloat4x4(&Cam->SpacialEnvironment.WorldMatrix));
+    InstancedCBuff.ProjectionMatrix = XMLoadFloat4x4(&Cam->SpacialEnvironment.ProjectionMatrix);
+    for (int i = 0; i < TempInstanced.size(); ++i)
+    {
+        InstancedCBuff.InstanceLocations[i] = XMLoadFloat4x4(&TempInstanced[i]->WorldMatrix);
+    }
+
+    // Send data to the graphics card.
+    D3D11_MAPPED_SUBRESOURCE InstancedGPUBuffer;
+    Context->Map(ConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &InstancedGPUBuffer);
+    memcpy(InstancedGPUBuffer.pData, &InstancedCBuff, sizeof(InstancedCBuff));
+    Context->Unmap(ConstantBuffer, 0);
+
+    // Set the culling mode based on the object.
+    if (TempInstanced[0]->bDisableBackfaceCulling)
+    {
+        Context->RSSetState(RasterizerStateNoCull);
+    }
+    else
+    {
+        Context->RSSetState(RasterizerState);
+    }
+
+    // Vertex and Pixel Shader stages.
+    Context->VSSetShader(InstancedTreeVS, 0, 0);
+    Context->VSSetConstantBuffers(0, 1, { &ConstantBuffer });
+    Context->PSSetSamplers(0, 1, &LinearSamplerState);
+    Context->PSSetConstantBuffers(0, 1, { &ConstantBuffer });
+    Context->PSSetShaderResources(0, 1, &TempInstanced[0]->ShaderResourceView);
+
+    // Draw the indexed instanced objects.
+    Context->DrawIndexedInstanced(TempInstanced[0]->Indices.size(), 100, 0, 0, 0);
+    */
     // Present the SwapChain with the option to Cap the framerate to moniters maximum.
     SwapChain->Present(FrameSyncControl, 0);
 }
@@ -400,16 +550,28 @@ void DisplayAgent::ReleaseInterfaces()
     SAFE_RELEASE(InputLayout);
     SAFE_RELEASE(RenderTargetView);
     SAFE_RELEASE(LinearSamplerState);
+    SAFE_RELEASE(PIPTexture);
+    SAFE_RELEASE(PIP_PixelShader);
+    SAFE_RELEASE(PIP_RenderTargetView);
+    SAFE_RELEASE(PIP_ShaderResourceView);
+    SAFE_RELEASE(PIP_ZBuffer);
+    SAFE_RELEASE(PIP_ZBufferView);
+    SAFE_RELEASE(RasterizerState);
+    SAFE_RELEASE(RasterizerStateNoCull);
     SAFE_RELEASE(ZBuffer);
     SAFE_RELEASE(ZBufferView);
     SAFE_RELEASE(SwapChain);
     SAFE_RELEASE(Context);
+
+    // Find memory leak
+    ID3D11Debug* DebugDevice = nullptr;
+    HRESULT hr = Device->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(&DebugDevice));
+    if (SUCCEEDED(hr))
+    {
+        hr = DebugDevice->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+    }
+    SAFE_RELEASE(DebugDevice);
     SAFE_RELEASE(Device);
-    SAFE_RELEASE(PIPTexture);
-    SAFE_RELEASE(PIP_PixelShader);
-    SAFE_RELEASE(PIP_RenderTargetView);
-    SAFE_RELEASE(PIP_PixelShader);
-    SAFE_RELEASE(PIP_ShaderResourceView);
 }
 
 // Delete all pointers before close.
@@ -428,6 +590,8 @@ void DisplayAgent::ReleasePointerObjects(bool bCameras, bool bObjects, bool bLig
     {
         for (unsigned int i = 0; i < WorldObjects.size(); ++i)
         {
+            WorldObjects[i]->EndPlay();
+
             WorldObjects[i] = nullptr;
             delete WorldObjects[i];
         }

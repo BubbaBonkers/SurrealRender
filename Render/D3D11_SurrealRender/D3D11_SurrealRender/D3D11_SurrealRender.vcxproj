@@ -178,8 +178,15 @@
   <ItemGroup>
     <Image Include="Assets\BambooT.dds" />
     <Image Include="Assets\Crate.dds" />
+    <Image Include="Assets\Earth.dds" />
     <Image Include="Assets\FancyBoxDDS.dds" />
+    <Image Include="Assets\Nebula.dds" />
+    <Image Include="Assets\Palm1.dds" />
     <Image Include="Assets\Planet1.dds" />
+    <Image Include="Assets\RedPlanet.dds" />
+    <Image Include="Assets\RedPlanetDome.dds" />
+    <Image Include="Assets\Space.dds" />
+    <Image Include="Assets\Spaceship.dds" />
     <Image Include="Assets\TorchTexture.dds" />
     <Image Include="Assets\Willow_Trunk_D.dds" />
     <Image Include="D3D11_SurrealRender.ico" />
@@ -208,13 +215,25 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
     </FxCompile>
+    <FxCompile Include="VS_TreeInstanced.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.0</ShaderModel>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Bamboo.mesh" />
     <None Include="Assets\BambooB.mesh" />
     <None Include="Assets\cube.mesh" />
+    <None Include="Assets\Earth.mesh" />
     <None Include="Assets\FancyBox.mesh" />
+    <None Include="Assets\Palm1.mesh" />
     <None Include="Assets\Planet1.mesh" />
+    <None Include="Assets\RedPlanet.mesh" />
+    <None Include="Assets\RedPlanetDome.mesh" />
+    <None Include="Assets\Spaceship.mesh" />
     <None Include="Assets\Torch.mesh" />
     <None Include="Assets\WillowTreeFBX.mesh" />
   </ItemGroup>

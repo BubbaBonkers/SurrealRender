@@ -38,10 +38,19 @@ cbuffer ConstantBuffer : register(b0)	// b for Buffer, and 0 for slot 0 in GPU.
     float DeltaTime;
     float DiscoIntensity;
     float WavingIntensity;
+    float WavingOffset;
+    float WavingMovement;
+    float BlueWavingIntensity;
+    float BWIntensity;
 };
 
-VS_OUTPUT main(VS_INPUT Input)
+cbuffer Instanced : register(b1)
 {
+    float4x4 InstanceLocations[100];
+}
+
+VS_OUTPUT main(VS_INPUT Input)
+{   
 	// Setup Position and Normals.
 	VS_OUTPUT Output = (VS_OUTPUT)0;
 	Output.Position = float4(Input.Position.xyz, 1);
@@ -57,7 +66,7 @@ VS_OUTPUT main(VS_INPUT Input)
     
     if (WavingIntensity > 0.0f)
     {
-        Output.Position.xy += Input.Normal * sin(Input.Position.xyz * 19.0f + WorldTime) * 1.1f; // * WavingIntensity;
+        Output.Position.xy += Input.Normal * sin(Input.Position.xyz * WavingOffset + WorldTime) * WavingMovement; // * WavingIntensity;
     }
     
     // Mirror surface.

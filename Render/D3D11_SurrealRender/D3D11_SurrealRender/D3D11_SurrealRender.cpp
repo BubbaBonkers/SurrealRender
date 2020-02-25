@@ -22,6 +22,7 @@
 #include "GeneralPixelShaders.csh"
 #include "GeneralMeshVertexShaders.csh"
 #include "PS_PictureInPicture.csh"
+#include "VS_TreeInstanced.csh"
 
 using namespace NRB;
 using namespace DirectX;
@@ -241,7 +242,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    descDSV.Format = ZDesc.Format;
    descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
    descDSV.Texture2D.MipSlice = 0;
-   MainDisplay->Device->CreateDepthStencilView(MainDisplay->ZBuffer, nullptr, &MainDisplay->ZBufferView);
+   hr = MainDisplay->Device->CreateDepthStencilView(MainDisplay->ZBuffer, nullptr, &MainDisplay->ZBufferView);
 
    // Setup the Viewport.
    MainDisplay->Viewport.Width = (float)Swap.BufferDesc.Width;
@@ -265,6 +266,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    // Load the new mesh shader.
    hr = MainDisplay->Device->CreateVertexShader(GeneralMeshVertexShaders, sizeof(GeneralMeshVertexShaders), nullptr, &MainDisplay->MeshVertexShader);
+
+   // Load the instanced shader.
+   hr = MainDisplay->Device->CreateVertexShader(VS_TreeInstanced, sizeof(VS_TreeInstanced), nullptr, &MainDisplay->InstancedTreeVS);
 
    // Write, Compile, and Load the shaders.
    hr = MainDisplay->Device->CreatePixelShader(GeneralPixelShaders, sizeof(GeneralPixelShaders), nullptr, &MainDisplay->PixelShader);
@@ -292,16 +296,45 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    BlendState.SrcBlend = D3D11_BLEND_SRC_ALPHA;
    BlendState.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
    BlendState.BlendOp = D3D11_BLEND_OP_ADD;
-   BlendState.SrcBlendAlpha = D3D11_BLEND_ZERO;
+   BlendState.SrcBlendAlpha = D3D11_BLEND_ONE;
    BlendState.DestBlendAlpha = D3D11_BLEND_ZERO;
    BlendState.BlendOpAlpha = D3D11_BLEND_OP_ADD;
    BlendState.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
-   BlendDescState.AlphaToCoverageEnable = TRUE;
-   BlendDescState.IndependentBlendEnable = TRUE;
+   BlendDescState.AlphaToCoverageEnable = FALSE;
+   BlendDescState.IndependentBlendEnable = FALSE;
    BlendDescState.RenderTarget[0] = BlendState;
 
    MainDisplay->Device->CreateBlendState(&BlendDescState, &MainDisplay->BlendState);
+
+   // Optional disable of the backface culling.
+   D3D11_RASTERIZER_DESC RasterizerDesc_NoCull;
+   RasterizerDesc_NoCull.FillMode = D3D11_FILL_SOLID;                      // This is also where you set wireframe.
+   RasterizerDesc_NoCull.FrontCounterClockwise = false;
+   RasterizerDesc_NoCull.DepthBias = 0;
+   RasterizerDesc_NoCull.SlopeScaledDepthBias = 0.0f;
+   RasterizerDesc_NoCull.DepthBiasClamp = 0.0f;
+   RasterizerDesc_NoCull.DepthClipEnable = true;
+   RasterizerDesc_NoCull.ScissorEnable = false;
+   RasterizerDesc_NoCull.MultisampleEnable = false;
+   RasterizerDesc_NoCull.AntialiasedLineEnable = false;
+   RasterizerDesc_NoCull.CullMode = D3D11_CULL_NONE;
+
+   D3D11_RASTERIZER_DESC RasterizerDesc;
+   RasterizerDesc.FillMode = D3D11_FILL_SOLID;                      // This is also where you set wireframe.
+   RasterizerDesc.FrontCounterClockwise = false;
+   RasterizerDesc.DepthBias = 0;
+   RasterizerDesc.SlopeScaledDepthBias = 0.0f;
+   RasterizerDesc.DepthBiasClamp = 0.0f;
+   RasterizerDesc.DepthClipEnable = true;
+   RasterizerDesc.ScissorEnable = false;
+   RasterizerDesc.MultisampleEnable = false;
+   RasterizerDesc.AntialiasedLineEnable = false;
+   RasterizerDesc.CullMode = D3D11_CULL_BACK;
+
+   // Create the new rasterizer state.
+   MainDisplay->Device->CreateRasterizerState(&RasterizerDesc, &MainDisplay->RasterizerState);
+   MainDisplay->Device->CreateRasterizerState(&RasterizerDesc_NoCull, &MainDisplay->RasterizerStateNoCull);
 
    // Create the constant buffer.
    D3D11_BUFFER_DESC BufferDescription;

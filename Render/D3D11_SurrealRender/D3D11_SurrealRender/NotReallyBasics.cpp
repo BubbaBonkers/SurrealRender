@@ -154,7 +154,7 @@ XMFLOAT4X4 NRB::Object::AddMovementInput(float x, float y, float z, bool bIgnore
 
 	// Translate the object in world space.
 	XMMATRIX Base = XMLoadFloat4x4(&WorldMatrix);
-	XMMATRIX Translated = XMMatrixTranslation((XMConvertToRadians(x) * Multiplier), (XMConvertToRadians(y) * Multiplier), (XMConvertToRadians(z) * Multiplier));
+	XMMATRIX Translated = XMMatrixTranslation((x * Multiplier), (y * Multiplier), (z * Multiplier));
 	Translated = XMMatrixMultiply(Base, Translated);
 
 	// Store the new information.
@@ -474,16 +474,16 @@ void NRB::Camera::Update(float DeltaTime)
 		// Increase and decrease camera movement speed.
 		if (GetKeyState('B') & 0x8000)
 		{
-			if (CameraMovementSpeed < 40.0f)
+			if (CameraMovementSpeed < 800.0f)
 			{
-				CameraMovementSpeed += (17.0f * DeltaTime);
+				CameraMovementSpeed += (40.0f * DeltaTime);
 			}
 		}
 		if (GetKeyState('V') & 0x8000)
 		{
 			if (CameraMovementSpeed > 1.0f)
 			{
-				CameraMovementSpeed -= (17.0f * DeltaTime);
+				CameraMovementSpeed -= (40.0f * DeltaTime);
 			}
 		}
 	}

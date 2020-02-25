@@ -37,6 +37,17 @@ public:
 		float DeltaTime;
 		float DiscoIntensity;
 		float WavingIntensity;
+		float WavingOffset;
+		float WavingMovement;
+		float BlueWavingIntensity;
+		float BWIntensity;
+	};
+
+	struct Instanced
+	{
+		XMMATRIX InstanceLocations[100];
+		XMMATRIX ViewMatrix;
+		XMMATRIX ProjectionMatrix;
 	};
 
 	struct PIP_ConstantBuffer
@@ -67,10 +78,15 @@ public:
 	ID3D11Texture2D*			DiffuseTexture = nullptr;
 	ID3D11Texture2D*			PIPTexture = nullptr;
 
+	// Rasterizer.
+	ID3D11RasterizerState* RasterizerState;
+	ID3D11RasterizerState* RasterizerStateNoCull;
+
 	// PIP Shader Resource View.
 	ID3D11ShaderResourceView* PIP_ShaderResourceView = nullptr;
 
 	ID3D11VertexShader* MeshVertexShader = nullptr;			// HLSL
+	ID3D11VertexShader* InstancedTreeVS = nullptr;			// HLSL
 
 	ID3D11Buffer* ConstantBuffer = nullptr;					// Stores shaders to send to the video card.
 
@@ -91,6 +107,8 @@ public:
 	std::vector<SpotLight*> WorldSpotLights;
 	std::vector<PointLight*> WorldPointLights;
 
+	std::vector<Object*> TempInstanced;
+
 	float G_GameTime = 0.0f;								// Global game time, in seconds, that has passed since the game started.
 
 	// Graphics control options. -------------------------------------------------------------------->
@@ -100,7 +118,7 @@ public:
 
 	// World control options. ----------------------------------------------------------------------->
 	XMFLOAT4 AmbientLightCol = { 1, 1, 0, 1 };							// Color of the ambient lighting in the world.
-	float AmbientLightIntense = 0.1f;									// Intensity of the ambient light on the environment.
+	float AmbientLightIntense = 0.05f;									// Intensity of the ambient light on the environment.
 
 	// Setup render target and present.
 	void PresentFromRenderTarget(Camera* Cam, Object* Obj, float DeltaTime = 1.0f);
@@ -108,6 +126,7 @@ public:
 	// Create a new object.
 	Object* CreateObject(const char* DebugName, const char* FileName, const char* TextureDDS, bool bHide = false, bool RenderInUI = false);
 	Object* CreateObject(const char* DebugName, const char* TextureDDS, std::vector<Vertex> VertexData, std::vector<int> IndexData, bool bHide = false, bool RenderInUI = false);
+	Object* CreateObject(const char* DebugName, const char* FileName, const char* TextureDDS, std::vector<Object*>* OutputVector, bool bHide = false, bool RenderInUI = false);
 
 	// Create a new camera, leave AttachTo as "nullptr" to not attach to an object.
 	Camera* CreateCamera(const char* DebugName, Object* AttachTo = nullptr);
@@ -116,6 +135,9 @@ public:
 	DirectionalLight* CreateDirectionalLight(const char* DebugName, XMFLOAT4 direction = { 1, 1, 1, 1 }, XMFLOAT4 color = { 1, 1, 1, 1 }, float intensity = 1.0f);
 	SpotLight* CreateSpotLight(const char* DebugName, XMFLOAT4 color = { 1, 1, 1, 1 }, float intensity = 1.0f);
 	PointLight* CreatePointLight(const char* DebugName, XMFLOAT4 color = { 1, 1, 1, 1 }, float intensity = 1.0f);
+
+	// Get an object by its debug name. This returns the first one found with the name, it will not return any after that.
+	Object* GetObjectByName(std::string Name);
 
 	// Called when this object is first created. (Game Start)
 	void StartPlay();

@@ -113,9 +113,15 @@ namespace NRB
 
 		// Below is extra functionality in case it is needed in the future.
 		bool bIsVisible = true;
+		bool bDisableBackfaceCulling = false;
 		XMFLOAT4 EmissiveColor = { 0, 0, 0, 0 };
+		float BWIntensity = 0.0f;
+		float SpecularIntensity = 0.0f;
 		float DiscoIntensity = 0.0f;
 		float WavingIntensity = 0.0f;
+		float BlueWavingIntensity = 0.0f;
+		float WavingOffset = 0.0f;
+		float WavingMovement = 0.0f;
 		bool RenderAsUI = false;												// Set to true to indicate that this object should be drawn as a UI element.
 		D3D_PRIMITIVE_TOPOLOGY TopologyType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
@@ -192,7 +198,7 @@ namespace NRB
 		Object* LookAtTarget = nullptr;
 
 		// Camera physical attributes.
-		float CameraMovementSpeed = 8.0f;									// Speed of camera movement in 3D space.
+		float CameraMovementSpeed = 35.0f;									// Speed of camera movement in 3D space.
 		float CameraRotationSpeed = 5.0f;									// Rate at which the camera rotates when you look around.
 
 		// Temp variables for testing features.
@@ -202,7 +208,7 @@ namespace NRB
 		float TickTime = 0.0f;
 
 		float NearClip = 0.1f;
-		float FarClip = 1000.0f;
+		float FarClip = 10000.0f;
 
 
 	public:

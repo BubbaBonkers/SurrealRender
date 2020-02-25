@@ -108,6 +108,27 @@
     <Image Include="Assets\Planet1.dds">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="Assets\RedPlanet.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Palm1.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Earth.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\RedPlanetDome.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Spaceship.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Space.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Nebula.dds">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="GeneralPixelShaders.hlsl">
@@ -117,6 +138,9 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="PS_PictureInPicture.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="VS_TreeInstanced.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>
@@ -140,6 +164,21 @@
       <Filter>Assets</Filter>
     </None>
     <None Include="Assets\BambooB.mesh">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="Assets\RedPlanet.mesh">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="Assets\Palm1.mesh">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="Assets\Earth.mesh">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="Assets\RedPlanetDome.mesh">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="Assets\Spaceship.mesh">
       <Filter>Assets</Filter>
     </None>
   </ItemGroup>
