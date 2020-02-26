@@ -22,10 +22,6 @@ The following controls are for when you are using 'Tab' to look at an object.
 	- [ S ] 		Move farther from object.
 
 Notes:
-	- The spotlight is the red light, and it moves and rotates on a sin wave back and forth against the large walls.
-	- The emissive material is on the cube that is lighting up. It is the same cube as the rest, just this one has an emissive brightness of { 3, 3, 3, 3 }.
-	- There is also a Bamboo with Emissive material on it. It doesn't load the mesh right yet, but it does use the alpha value of the texture to calculate light in the pixel shader.
-	- The planet is also slightly emissive, and it swirls from a vertex shader, so I am calling it lava!
-
-	- The point light slowly rotates about and falls down from the scene, so the green light is the point light and will eventually disappear to show that it is dynamic.
-	- The cube will light up for the directional light, and get dim and dark for the ambient light.
+	- The planets are using a depth sorting algorithm.
+	- There are two planets, a sun (three celestial bodies), and a moon rotating around the red planet.
+	- You control the spaceship (not perfectly).
