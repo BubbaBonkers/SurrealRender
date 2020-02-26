@@ -25,3 +25,4 @@ Notes:
 	- The planets are using a depth sorting algorithm.
 	- There are two planets, a sun (three celestial bodies), and a moon rotating around the red planet.
 	- You control the spaceship (not perfectly).
+	- The .exe is in the folder with the source cpp and header files.
