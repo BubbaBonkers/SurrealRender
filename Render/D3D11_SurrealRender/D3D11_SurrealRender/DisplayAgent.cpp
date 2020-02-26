@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <time.h>
+#include <math.h>
 
 #define SAFE_RELEASE(ptr) { if(ptr) { ptr->Release(); ptr = nullptr; } }
 #define D3DXToRadian(degree) ((degree) * (D3DX_PI / 180.0f))
@@ -13,13 +14,8 @@ void DisplayAgent::StartPlay()
     Object* CubeTest = CreateObject("TestingCube", "Assets/cube.mesh", "Assets/Crate.dds");
     CubeTest->SpecularIntensity = 32.0f;
 
-    // Fancy Box.
-    Object* MultipleObjectTest = CreateObject("SecondCube", "Assets/FancyBox.mesh", "Assets/FancyBoxDDS.dds", false, true);
-    MultipleObjectTest->AddMovementInput(30.0f, -5.0f, 5.0f, true);
-    MultipleObjectTest->AddRotationInput(-5.0f, 3.0f, 0.0f, true);
-
     // Star.
-    Object* WavingCube = CreateObject("PlanetWave", "Assets/Planet1.mesh", "Assets/Planet1.dds", false, false);
+    Object* WavingCube = CreateObject("Star", "Assets/Planet1.mesh", "Assets/Planet1.dds", false, false);
     WavingCube->EmissiveColor = { 1.5f, 0.2f, 0, 1.0f };
     WavingCube->AddMovementInput(600.0f, 10.0f, -450.0f, true);
     WavingCube->Scale(12.0f, 12.0f, 12.0f);
@@ -30,40 +26,17 @@ void DisplayAgent::StartPlay()
     // Red Planet.
     Object* RedPlanet = CreateObject("RedPlanet", "Assets/RedPlanet.mesh", "Assets/RedPlanet.dds", false, false);
     RedPlanet->Scale(1.0f, 1.0f, 1.0f);
-    RedPlanet->AddMovementInput(-100.0f, 15.0f, 250.0f, true);
     RedPlanet->EmissiveColor = { 0.3f, 0.025f, 0.04f, 1.0f };
-    DirectX::XMStoreFloat4x4(&RedPlanet->WorldMatrix, XMMatrixMultiply(XMLoadFloat4x4(&RedPlanet->WorldMatrix), XMLoadFloat4x4(&WavingCube->WorldMatrix)));
     RedPlanet->SpecularIntensity = 32.0f;
+    RedPlanet->AttachToParent(WavingCube);
+    RedPlanet->AddLocalMovementInput(-100.0f, 15.0f, 250.0f, true);
 
     // Disco Cube.
     Object* StaticSinWaveCube = CreateObject("TestingCubeWave", "Assets/cube.mesh", "Assets/Crate.dds");
     StaticSinWaveCube->DiscoIntensity = 1.0f;
     StaticSinWaveCube->AddMovementInput(-30.0f, 11.0f, -25.0f, true);
 
-    // Testing Torch Mesh.
-    Object* Torch = CreateObject("TorchTest", "Assets/Torch.mesh", "Assets/TorchTexture.dds");
-    Torch->Scale(30.0f, 30.0f, 30.0f);
-    Torch->AddMovementInput(-25.0f, 15.0f, 15.0f, true);
-
-    // Testing Bamboo Mesh.
-    Object* Bamboo = CreateObject("Bamboo", "Assets/Bamboo.mesh", "Assets/BambooT.dds");
-    Bamboo->Scale(30.0f, 30.0f, 30.0f);
-    Bamboo->AddMovementInput(25.0f, 5.0f, -15.0f, true);
-    Bamboo->bDisableBackfaceCulling = true;
-
-    // Simple Wall.
-    Object* WallTest = CreateObject("TestingWall", "Assets/cube.mesh", "Assets/Crate.dds");
-    WallTest->Scale(10.0f, 10.0f, 1.0f);
-    WallTest->AddMovementInput(5.0f, -2.5f, 10.4f, true);
-    WallTest->BWIntensity = 1.0f;
-
-    // Simple Wall.
-    Object* WallTestB = CreateObject("TestingWall", "Assets/cube.mesh", "Assets/Crate.dds");
-    WallTestB->Scale(1.0f, 10.0f, 10.0f);
-    WallTestB->AddMovementInput(15.4f, -2.5f, 2.0f, true);
-    WallTestB->BWIntensity = 1.0f;
-
-    Object* Origin = CreateObject("TestingCube", "Assets/cube.mesh", "Assets/Crate.dds");
+    Object* Origin = CreateObject("Origin", "Assets/cube.mesh", "Assets/Crate.dds");
     Origin->Scale(0.5f, 0.5f, 0.5f);
 
     // Red Planet.
@@ -72,20 +45,39 @@ void DisplayAgent::StartPlay()
     RedPlanetDome->AddMovementInput(-100.0f, 15.0f, 250.0f, true);
     DirectX::XMStoreFloat4x4(&RedPlanetDome->WorldMatrix, XMMatrixMultiply(XMLoadFloat4x4(&RedPlanetDome->WorldMatrix), XMLoadFloat4x4(&WavingCube->WorldMatrix)));
     RedPlanetDome->SpecularIntensity = 8.0f;
+    RedPlanetDome->AttachToParent(RedPlanet);
 
     // Red Planet.
-    Object* RedPlanetDomeB = CreateObject("RedPlanetDome", "Assets/RedPlanetDome.mesh", "Assets/RedPlanetDome.dds");
+    Object* RedPlanetDomeB = CreateObject("DepthSorted", "Assets/RedPlanetDome.mesh", "Assets/RedPlanetDome.dds");
     RedPlanetDomeB->Scale(1.0f, 1.0f, 1.0f);
     RedPlanetDomeB->AddMovementInput(-200.0f, 15.0f, 350.0f, true);
     DirectX::XMStoreFloat4x4(&RedPlanetDomeB->WorldMatrix, XMMatrixMultiply(XMLoadFloat4x4(&RedPlanetDomeB->WorldMatrix), XMLoadFloat4x4(&WavingCube->WorldMatrix)));
     RedPlanetDomeB->SpecularIntensity = 8.0f;
+    RedPlanetDomeB->bEnableDepthSort = true;
 
     // Red Planet.
-    Object* RedPlanetDomeC = CreateObject("RedPlanetDome", "Assets/RedPlanetDome.mesh", "Assets/RedPlanetDome.dds");
+    Object* RedPlanetDomeC = CreateObject("DepthSorted", "Assets/RedPlanetDome.mesh", "Assets/RedPlanetDome.dds");
     RedPlanetDomeC->Scale(1.0f, 1.0f, 1.0f);
     RedPlanetDomeC->AddMovementInput(-300.0f, 15.0f, 450.0f, true);
     DirectX::XMStoreFloat4x4(&RedPlanetDomeC->WorldMatrix, XMMatrixMultiply(XMLoadFloat4x4(&RedPlanetDomeC->WorldMatrix), XMLoadFloat4x4(&WavingCube->WorldMatrix)));
     RedPlanetDomeC->SpecularIntensity = 8.0f;
+    RedPlanetDomeC->bEnableDepthSort = true;
+
+    // Red Planet.
+    Object* RedPlanetDomeD = CreateObject("DepthSorted", "Assets/RedPlanetDome.mesh", "Assets/RedPlanetDome.dds");
+    RedPlanetDomeD->Scale(1.0f, 1.0f, 1.0f);
+    RedPlanetDomeD->AddMovementInput(-400.0f, 15.0f, 550.0f, true);
+    DirectX::XMStoreFloat4x4(&RedPlanetDomeD->WorldMatrix, XMMatrixMultiply(XMLoadFloat4x4(&RedPlanetDomeD->WorldMatrix), XMLoadFloat4x4(&WavingCube->WorldMatrix)));
+    RedPlanetDomeD->SpecularIntensity = 8.0f;
+    RedPlanetDomeD->bEnableDepthSort = true;
+
+    // Moon.
+    Object* Moon = CreateObject("Moon", "Assets/Moon.mesh", "Assets/Moon.dds", false, false);
+    Moon->Scale(1.0f, 1.0f, 1.0f);
+    Moon->AttachToParent(RedPlanet);
+    Moon->AddLocalMovementInput(40.0f, 15.0f, -100.0f, true);
+    Moon->EmissiveColor = { 0.3f, 0.025f, 0.04f, 1.0f };
+    Moon->SpecularIntensity = 32.0f;
 
     for (int x = 0; x < 10; ++x)
     {
@@ -125,16 +117,16 @@ void DisplayAgent::StartPlay()
     Earth->WavingOffset = 2.0f;
 
     // Spaceship.
-    Object* Spaceship = CreateObject("Spaceship", "Assets/Spaceship.mesh", "Assets/Spaceship.dds");
-    Spaceship->SpecularIntensity = 32.0f;
+    Object* Spaceship = CreateObject("Spaceship", "Assets/Talon.mesh", "Assets/Talon.dds");
+    Spaceship->SpecularIntensity = 8.0f;
     Spaceship->Scale(30.0f, 30.0f, 30.0f);
     Spaceship->bDisableBackfaceCulling = true;
     Spaceship->AddMovementInput(0.0f, 10.0f, 0.0f, true);
 
     // Skybox.
     Object* Skybox = CreateObject("Skybox", "Assets/cube.mesh", "Assets/Nebula.dds");
-    Skybox->Scale(-6000.0f, -6000.0f, -6000.0f);
-    Skybox->AddMovementInput(0.0f, 3000.0f, 0.0f, true);
+    Skybox->Scale(-8000.0f, -8000.0f, -8000.0f);
+    Skybox->AddMovementInput(0.0f, 4000.0f, 0.0f, true);
     Skybox->EmissiveColor = { 1, 1, 1, 1 };
 
     // Camera Acting as Eyes.
@@ -201,6 +193,46 @@ Object* DisplayAgent::GetObjectByName(std::string Name)
     }
 
     return nullptr;
+}
+
+// Get an object by its debug name. This returns the first one found with the name, it will not return any after that. Returns nullptr if no object is found.
+std::vector<Object*> DisplayAgent::GetObjectsByName(std::string Name)
+{
+    std::vector<Object*> ReturnElements;
+
+    for (unsigned int i = 0; i < WorldObjects.size(); ++i)
+    {
+        if (WorldObjects[i]->Name == Name)
+        {
+            ReturnElements.push_back(WorldObjects[i]);
+        }
+    }
+
+    return ReturnElements;
+}
+
+// Remove all objects from the world objects if their name matches the input parameter. Returns how many were removed. This does not clear their memory.
+int DisplayAgent::RemoveObjectsByName(std::string Name, std::vector<Object*> Add)
+{
+    int Removed = 0;
+
+    for (unsigned int i = 0; i < WorldObjects.size(); ++i)
+    {
+        const char* CharName = Name.c_str();
+
+        if (WorldObjects[i]->Name = CharName)
+        {
+            WorldObjects.erase(WorldObjects.begin() + i);
+            Removed++;
+        }
+    }
+
+    for (unsigned int i = 0; i < Add.size(); ++i)
+    {
+        WorldObjects.push_back(Add[i]);
+    }
+
+    return Removed;
 }
 
 // Create a new camera, leave AttachTo as "nullptr" to not attach to an object.
@@ -305,24 +337,50 @@ void DisplayAgent::ChangeAspectRatio(float InRatio)
     }
 }
 
-void DisplayAgent::PresentFromRenderTarget(Camera* Cam, Object* Obj, float DeltaTime)
+void DisplayAgent::PresentFromRenderTarget(Camera* Cam, float DeltaTime)
 {
     // Increase global game time.
     G_GameTime += DeltaTime;
     
     // Translate the object in world space.
     GetObjectByName("TestingCube")->AddRotationInput(0, 1.0f, 0);
-    GetObjectByName("RedPlanet")->AddRotationInput(0, -0.05f, 0);
-    GetObjectByName("PlanetWave")->AddRotationInput(0.0f, 0.1f, 0.0f);
-    GetObjectByName("RedPlanetDome")->AddRotationInput(0.0f, -0.08f, 0.0f);
+    GetObjectByName("RedPlanet")->AddLocalRotationInput(0.0f, -0.4f, 0.0f);
+    GetObjectByName("RedPlanetDome")->AddLocalRotationInput(0.0f, -0.4f, 0.0f);
+    GetObjectByName("Moon")->AddLocalRotationInput(0.0f, 2.0f, 0.0f);
+    GetObjectByName("Star")->AddRotationInput(0.0f, 0.1f, 0.0f);
     GetObjectByName("TestingCubeWave")->AddRotationInput(-5.0f, 0.0f, 0.0f);
-    GetObjectByName("SecondCube")->AddMovementInput(0.0f, sin(G_GameTime) * 10.0f, 0.0f);
-    GetObjectByName("Spaceship")->AddMovementInput(0.0f, sin(G_GameTime) * 1.0f, 20.0f);
-    GetObjectByName("Skybox")->WorldMatrix._41 = Cam->SpacialEnvironment.WorldMatrix._41;
-    GetObjectByName("Skybox")->WorldMatrix._42 = Cam->SpacialEnvironment.WorldMatrix._42 + 5000.0f;
-    GetObjectByName("Skybox")->WorldMatrix._43 = Cam->SpacialEnvironment.WorldMatrix._43;
-    WorldPointLights[0]->AddMovementInput(-0.5f, 0.0f, 0.0f);
-    
+    GetObjectByName("Spaceship")->WorldMatrix = Cam->SpacialEnvironment.WorldMatrix;
+
+    GetObjectByName("Spaceship")->SetLocation(Cam->SpacialEnvironment.WorldMatrix._41, (Cam->SpacialEnvironment.WorldMatrix._42 - 0.2f), (Cam->SpacialEnvironment.WorldMatrix._43 + 1.2f));
+    Cam->AddMovementInput(0.0f, sin(G_GameTime) * 0.0005f, 0.0f);
+    GetObjectByName("Skybox")->SetLocation(Cam->SpacialEnvironment.WorldMatrix._41, Cam->SpacialEnvironment.WorldMatrix._42 + 6000.0f, Cam->SpacialEnvironment.WorldMatrix._43);
+
+    // Get items needed to be sorted by depth.
+    std::vector<Object*> SortObjects = GetObjectsByName("DepthSorted");
+
+    // Depth sort the transparent objects in the scene before drawing them.
+    for (unsigned int i = 0; i < SortObjects.size(); ++i)
+    {
+        for (unsigned int j = i + 1; j < SortObjects.size(); ++j)
+        {
+            float DistanceI = sqrt(pow(SortObjects[i]->WorldMatrix._41 - Cam->SpacialEnvironment.WorldMatrix._41, 2) +
+                pow(SortObjects[i]->WorldMatrix._42 - Cam->SpacialEnvironment.WorldMatrix._42, 2) +
+                pow(SortObjects[i]->WorldMatrix._43 - Cam->SpacialEnvironment.WorldMatrix._43, 2));
+            float DistanceJ = sqrt(pow(SortObjects[j]->WorldMatrix._41 - Cam->SpacialEnvironment.WorldMatrix._41, 2) +
+                pow(SortObjects[j]->WorldMatrix._42 - Cam->SpacialEnvironment.WorldMatrix._42, 2) +
+                pow(SortObjects[j]->WorldMatrix._43 - Cam->SpacialEnvironment.WorldMatrix._43, 2));
+
+            if (DistanceI > DistanceJ)
+            {
+                Object* CurrI = SortObjects[i];
+                SortObjects[i] = SortObjects[j];
+                SortObjects[j] = CurrI;
+            }
+        }
+    }
+
+    //RemoveObjectsByName("DepthSorted", SortObjects);
+
     // Setup UI stuffs.
     OffscreenViewportA.Width = 400;
     OffscreenViewportA.Height = 500;

@@ -163,6 +163,29 @@ XMFLOAT4X4 NRB::Object::AddMovementInput(float x, float y, float z, bool bIgnore
 	return WorldMatrix;
 }
 
+XMFLOAT4X4 NRB::Object::AddLocalMovementInput(float x, float y, float z, bool bIgnoreDeltaTime)
+{
+	float Multiplier = 1.0f;
+	if (bIgnoreDeltaTime)
+	{
+		Multiplier = 1.0f;
+	}
+	else
+	{
+		Multiplier = TickTime;
+	}
+
+	// Translate the object in world space.
+	XMMATRIX Base = XMLoadFloat4x4(&LocalMatrix);
+	XMMATRIX Translated = XMMatrixTranslation((x * Multiplier), (y * Multiplier), (z * Multiplier));
+	Translated = XMMatrixMultiply(Base, Translated);
+
+	// Store the new information.
+	XMStoreFloat4x4(&LocalMatrix, Translated);
+
+	return LocalMatrix;
+}
+
 // Rotate this object in a 3D world. Return the object's new World Matrix after rotation.
 XMFLOAT4X4 NRB::Object::AddRotationInput(float Pitch, float Yaw, float Roll, bool bIgnoreDeltaTime)
 {
@@ -187,6 +210,50 @@ XMFLOAT4X4 NRB::Object::AddRotationInput(float Pitch, float Yaw, float Roll, boo
 	return WorldMatrix;
 }
 
+// Rotate this object in a 3D world relative to its attach parent.
+XMFLOAT4X4 NRB::Object::AddLocalRotationInput(float Pitch, float Yaw, float Roll, bool bIgnoreDeltaTime)
+{
+	float Multiplier = 1.0f;
+	if (bIgnoreDeltaTime)
+	{
+		Multiplier = 1.0f;
+	}
+	else
+	{
+		Multiplier = TickTime;
+	}
+
+	// Rotate the object in world space.
+	XMMATRIX Base = XMLoadFloat4x4(&LocalMatrix);
+	XMMATRIX Rotated = XMMatrixRotationRollPitchYaw((Pitch * Multiplier), (Yaw * Multiplier), (Roll * Multiplier));
+	Rotated = XMMatrixMultiply(Rotated, Base);
+
+	// Store the new information.
+	XMStoreFloat4x4(&LocalMatrix, Rotated);
+
+	return LocalMatrix;
+}
+
+// Set this object's location to another location.
+XMFLOAT4X4 NRB::Object::SetLocation(float x, float y, float z)
+{
+	WorldMatrix._41 = x;
+	WorldMatrix._42 = y;
+	WorldMatrix._43 = z;
+
+	return WorldMatrix;
+}
+
+// Set this object's rotation to another rotation.
+XMFLOAT4X4 NRB::Object::SetRotation(float Pitch, float Yaw, float Roll)
+{
+	WorldMatrix._11 = Yaw;
+	WorldMatrix._22 = Pitch;
+	WorldMatrix._33 = Roll;
+
+	return WorldMatrix;
+}
+
 // Change the scale of this object.
 XMFLOAT4X4 NRB::Object::Scale(float X, float Y, float Z)
 {
@@ -195,10 +262,38 @@ XMFLOAT4X4 NRB::Object::Scale(float X, float Y, float Z)
 	return WorldMatrix;
 }
 
+// Attach an object to another as a child and keep relative to the new parent.
+void NRB::Object::AttachToParent(Object* Obj)
+{
+	AttachParent = Obj;
+}
+
+// Get the forward vector of this object.
+XMFLOAT3 NRB::Object::ForwardVector()
+{
+	XMFLOAT3 ForwardVec = { WorldMatrix._13,  WorldMatrix._23, WorldMatrix._33 };
+
+	return ForwardVec;
+}
+
+// Get the right vector of this object.
+XMFLOAT3 NRB::Object::RightVector()
+{
+	XMFLOAT3 RightVec = { WorldMatrix._11,  WorldMatrix._21, WorldMatrix._31 };
+
+	return RightVec;
+}
+
 // Called every frame.
 void NRB::Object::Update(float DeltaTime)
 {
 	TickTime = DeltaTime;
+
+	// Child's world matrix, in hierarchy, is equal to (child world = child local * parent word).
+	if (AttachParent != nullptr)
+	{
+		XMStoreFloat4x4(&WorldMatrix, XMMatrixMultiply(XMLoadFloat4x4(&LocalMatrix), XMLoadFloat4x4(&AttachParent->WorldMatrix)));
+	}
 }
 
 // Count how many vertices are in the Vertices array and return it as an int.
@@ -211,23 +306,6 @@ int NRB::Object::CountVertices()
 int NRB::Object::CountIndices()
 {
 	return Indices.size();
-}
-
-// Create a primitive shape out of vertex and index data, then load it into this object.
-void NRB::Object::LoadPrimitive(PRIM_TYPE Type)
-{
-	switch (Type)
-	{
-		case LINE:
-		{
-			
-		}
-
-		case GRID:
-		{
-
-		}
-	}
 }
 
 // Create the basic information in this object by using input values. Basic object, no meshes.
@@ -246,6 +324,7 @@ void NRB::Object::CreateObject(const char* DebugName, const char* TextureDDS, st
 
 	// Setup spacial cognition.
 	XMStoreFloat4x4(&WorldMatrix, XMMatrixIdentity());
+	XMStoreFloat4x4(&LocalMatrix, XMMatrixIdentity());
 }
 
 // Same as CreateObject base, but this one takes a File Name for the mesh to load into the object.
@@ -263,6 +342,7 @@ void NRB::Object::CreateObject(const char* DebugName, const char* FileName, cons
 
 	// Setup spacial cognition.
 	XMStoreFloat4x4(&WorldMatrix, XMMatrixIdentity());
+	XMStoreFloat4x4(&LocalMatrix, XMMatrixIdentity());
 }
 
 // Load mesh information such as Texture, Vertices, Indices, and UVs onto this object using a .mesh object file as MeshFileName.
@@ -474,9 +554,9 @@ void NRB::Camera::Update(float DeltaTime)
 		// Increase and decrease camera movement speed.
 		if (GetKeyState('B') & 0x8000)
 		{
-			if (CameraMovementSpeed < 800.0f)
+			if (CameraMovementSpeed < 1500.0f)
 			{
-				CameraMovementSpeed += (40.0f * DeltaTime);
+				CameraMovementSpeed += (50.0f * DeltaTime);
 			}
 		}
 		if (GetKeyState('V') & 0x8000)
@@ -611,6 +691,22 @@ void NRB::Camera::ChangeCameraClipping(float MinZ, float MaxZ)
 	FarClip = MaxZ;
 	XMMATRIX Temp = XMMatrixPerspectiveFovLH((XMConvertToRadians(FieldOfViewDeg)), AspectRatio, NearClip, FarClip);
 	XMStoreFloat4x4(&SpacialEnvironment.ProjectionMatrix, Temp);
+}
+
+// Get the forward vector of this object.
+XMFLOAT3 NRB::Camera::ForwardVector()
+{
+	XMFLOAT3 ForwardVec = { SpacialEnvironment.WorldMatrix._13,  SpacialEnvironment.WorldMatrix._23, SpacialEnvironment.WorldMatrix._33 };
+
+	return ForwardVec;
+}
+
+// Get the right vector of this object.
+XMFLOAT3 NRB::Camera::RightVector()
+{
+	XMFLOAT3 RightVec = { SpacialEnvironment.WorldMatrix._11,  SpacialEnvironment.WorldMatrix._21, SpacialEnvironment.WorldMatrix._31 };
+
+	return RightVec;
 }
 
 // Called before the window closes.

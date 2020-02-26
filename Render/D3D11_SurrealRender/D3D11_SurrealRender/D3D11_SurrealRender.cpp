@@ -112,7 +112,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             break;
         }
 
-        MainDisplay->PresentFromRenderTarget(MainDisplay->WorldCameras[0], MainDisplay->WorldObjects[0], DeltaTime);
+        MainDisplay->PresentFromRenderTarget(MainDisplay->WorldCameras[0], DeltaTime);
     }
 
     // Release all used D3D interfaces.

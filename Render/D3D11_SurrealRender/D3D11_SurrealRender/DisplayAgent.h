@@ -121,7 +121,7 @@ public:
 	float AmbientLightIntense = 0.05f;									// Intensity of the ambient light on the environment.
 
 	// Setup render target and present.
-	void PresentFromRenderTarget(Camera* Cam, Object* Obj, float DeltaTime = 1.0f);
+	void PresentFromRenderTarget(Camera* Cam, float DeltaTime = 1.0f);
 
 	// Create a new object.
 	Object* CreateObject(const char* DebugName, const char* FileName, const char* TextureDDS, bool bHide = false, bool RenderInUI = false);
@@ -138,6 +138,12 @@ public:
 
 	// Get an object by its debug name. This returns the first one found with the name, it will not return any after that.
 	Object* GetObjectByName(std::string Name);
+
+	// Get an array of objects by a debug name. This returns all objects found with a certain name.
+	std::vector<Object*> GetObjectsByName(std::string Name);
+
+	// Remove all objects from the world objects if their name matches the input parameter. Returns how many were removed. This does not clear their memory.
+	int RemoveObjectsByName(std::string Name, std::vector<Object*> Add);
 
 	// Called when this object is first created. (Game Start)
 	void StartPlay();

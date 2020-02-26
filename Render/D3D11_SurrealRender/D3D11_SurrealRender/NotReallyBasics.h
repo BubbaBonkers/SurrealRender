@@ -100,6 +100,7 @@ namespace NRB
 
 		// Spacial cognition for object class.
 		XMFLOAT4X4 WorldMatrix;
+		XMFLOAT4X4 LocalMatrix;
 
 		const char* Name;					// The name of this object for debugging.
 		const char* TextureFilepath;		// The filepath for the DDS texture file to load.
@@ -114,6 +115,7 @@ namespace NRB
 		// Below is extra functionality in case it is needed in the future.
 		bool bIsVisible = true;
 		bool bDisableBackfaceCulling = false;
+		bool bEnableDepthSort = false;
 		XMFLOAT4 EmissiveColor = { 0, 0, 0, 0 };
 		float BWIntensity = 0.0f;
 		float SpecularIntensity = 0.0f;
@@ -124,6 +126,9 @@ namespace NRB
 		float WavingMovement = 0.0f;
 		bool RenderAsUI = false;												// Set to true to indicate that this object should be drawn as a UI element.
 		D3D_PRIMITIVE_TOPOLOGY TopologyType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+		// Child's world matrix, in hierarchy, is equal to (child world = child local * parent word).
+		Object* AttachParent = nullptr;
 
 	private:
 		float TickTime = 0.0f;
@@ -137,11 +142,34 @@ namespace NRB
 		// Move this object in a 3D world. Returns the object's new World Matrix after movement.
 		XMFLOAT4X4 AddMovementInput(float x, float y, float z, bool bIgnoreDeltaTime = false);
 
+		// Move this object in a 3D world, relative to its attaching parent.
+		XMFLOAT4X4 AddLocalMovementInput(float x, float y, float z, bool bIgnoreDeltaTime = false);
+
 		// Rotate this object in a 3D world. Return the object's new World Matrix after rotation.
 		XMFLOAT4X4 AddRotationInput(float Pitch, float Yaw, float Roll, bool bIgnoreDeltaTime = false);
 
+		// Rotate this object in a 3D world relative to its attach parent.
+		XMFLOAT4X4 AddLocalRotationInput(float Pitch, float Yaw, float Roll, bool bIgnoreDeltaTime = false);
+
+		// Set this object's location to another location.
+		XMFLOAT4X4 SetLocation(float x, float y, float z);
+
+		// Set this object's rotation to another rotation.
+		XMFLOAT4X4 SetRotation(float Pitch, float Yaw, float Roll);
+
 		// Change the scale of this object.
 		XMFLOAT4X4 Scale(float X, float Y, float Z);
+
+		// Attach an object to another as a child and keep relative to the new parent.
+		void AttachToParent(Object* Obj);
+
+
+		// ---------- 3D Spacial Helpers. -------------------------------------------------------------------------------------------------------->
+		// Get the forward vector of this object.
+		XMFLOAT3 ForwardVector();
+
+		// Get the right vector of this object.
+		XMFLOAT3 RightVector();
 
 
 		// ---------- Functionality for this object. --------------------------------------------------------------------------------------------->
@@ -157,12 +185,6 @@ namespace NRB
 
 		// Count how many indices are in the Indices array and return it as an int.
 		int CountIndices();
-
-
-		// ---------- Primitive shape functions. ------------------------------------------------------------------------------------------------->
-
-		// Create a primitive shape out of vertex and index data, then load it into this object.
-		void LoadPrimitive(PRIM_TYPE Type = LINE);
 
 
 		// ---------- Stuff for loading meshes, setting up the Object, and initializing values.--------------------------------------------------->
@@ -208,7 +230,7 @@ namespace NRB
 		float TickTime = 0.0f;
 
 		float NearClip = 0.1f;
-		float FarClip = 10000.0f;
+		float FarClip = 16500.0f;
 
 
 	public:
@@ -227,6 +249,14 @@ namespace NRB
 
 		// Called every frame.
 		void Update(float DeltaTime);
+
+
+		// ---------- 3D Spacial Helpers. -------------------------------------------------------------------------------------------------------->
+		// Get the forward vector of this object.
+		XMFLOAT3 ForwardVector();
+
+		// Get the right vector of this object.
+		XMFLOAT3 RightVector();
 
 
 		// ---------- Stuff for loading meshes, setting up the Object, and initializing values.--------------------------------------------------->

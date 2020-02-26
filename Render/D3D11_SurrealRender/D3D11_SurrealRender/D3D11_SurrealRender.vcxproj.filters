@@ -129,6 +129,12 @@
     <Image Include="Assets\Nebula.dds">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="Assets\Talon.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Moon.dds">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="GeneralPixelShaders.hlsl">
@@ -179,6 +185,12 @@
       <Filter>Assets</Filter>
     </None>
     <None Include="Assets\Spaceship.mesh">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="Assets\Talon.mesh">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="Assets\Moon.mesh">
       <Filter>Assets</Filter>
     </None>
   </ItemGroup>

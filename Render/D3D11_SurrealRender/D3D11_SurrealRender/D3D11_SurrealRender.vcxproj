@@ -180,6 +180,7 @@
     <Image Include="Assets\Crate.dds" />
     <Image Include="Assets\Earth.dds" />
     <Image Include="Assets\FancyBoxDDS.dds" />
+    <Image Include="Assets\Moon.dds" />
     <Image Include="Assets\Nebula.dds" />
     <Image Include="Assets\Palm1.dds" />
     <Image Include="Assets\Planet1.dds" />
@@ -187,6 +188,7 @@
     <Image Include="Assets\RedPlanetDome.dds" />
     <Image Include="Assets\Space.dds" />
     <Image Include="Assets\Spaceship.dds" />
+    <Image Include="Assets\Talon.dds" />
     <Image Include="Assets\TorchTexture.dds" />
     <Image Include="Assets\Willow_Trunk_D.dds" />
     <Image Include="D3D11_SurrealRender.ico" />
@@ -229,11 +231,13 @@
     <None Include="Assets\cube.mesh" />
     <None Include="Assets\Earth.mesh" />
     <None Include="Assets\FancyBox.mesh" />
+    <None Include="Assets\Moon.mesh" />
     <None Include="Assets\Palm1.mesh" />
     <None Include="Assets\Planet1.mesh" />
     <None Include="Assets\RedPlanet.mesh" />
     <None Include="Assets\RedPlanetDome.mesh" />
     <None Include="Assets\Spaceship.mesh" />
+    <None Include="Assets\Talon.mesh" />
     <None Include="Assets\Torch.mesh" />
     <None Include="Assets\WillowTreeFBX.mesh" />
   </ItemGroup>

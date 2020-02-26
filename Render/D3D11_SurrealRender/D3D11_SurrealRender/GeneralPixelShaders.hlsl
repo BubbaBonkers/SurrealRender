@@ -47,7 +47,7 @@ float4 main(VS_OUTPUT InputPixel) : SV_TARGET
     float OriginalAlpha = FinalColor.a;
     
     // Check for alpha elimination.
-    if(FinalColor.a < 0.1f)
+    if(FinalColor.a < 0.05f)
     {
         discard;
     }
